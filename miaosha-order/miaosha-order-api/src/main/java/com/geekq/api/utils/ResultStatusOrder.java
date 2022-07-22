@@ -99,6 +99,7 @@ public enum ResultStatusOrder {
         return this.name();
     }
 
+    @Override
     public String toString() {
         return this.getName();
     }
