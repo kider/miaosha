@@ -20,7 +20,7 @@
         <jmh.version>1.33</jmh.version>
         <reflections.version>0.10.2</reflections.version>
         <spring-boot.version>2.6.1</spring-boot.version>
-        <dubbo.starter.version>0.2.1.RELEASE</dubbo.starter.version>
+        <dubbo.starter.version>2.0.0</dubbo.starter.version>
         <mybatis.starter.version>2.2.0</mybatis.starter.version>
         <zookeeper.version>3.4.14</zookeeper.version>
         <com.zk.client>0.1</com.zk.client>
@@ -70,7 +70,7 @@
                 <version>${mybatis.starter.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.alibaba.boot</groupId>
+                <groupId>com.alibaba.spring.boot</groupId>
                 <artifactId>dubbo-spring-boot-starter</artifactId>
                 <version>${dubbo.starter.version}</version>
             </dependency>
@@ -164,11 +164,6 @@
                 <groupId>org.mybatis</groupId>
                 <artifactId>mybatis-spring</artifactId>
                 <version>2.0.6</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba.spring.boot</groupId>
-                <artifactId>dubbo-spring-boot-starter</artifactId>
-                <version>2.0.0</version>
             </dependency>
             <!--test-->
             <dependency>
