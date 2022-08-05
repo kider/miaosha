@@ -6,12 +6,11 @@
 	http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
 		
 	<!-- 为当前服务提供者取个名字，并且提供给注册中心 -->
-	<dubbo:application name="dubbo-consumer3"></dubbo:application>
+	<dubbo:application name="miaosha-web"/>
 	
 	<!-- 注册中心的配置，用于消费者的监听 -->
-	<dubbo:registry protocol="zookeeper" address="www.coolboy.fun:xxxx"></dubbo:registry>
+	<dubbo:registry id="miaosha" protocol="zookeeper" address="www.coolboy.fun:xxxx"/>
 	
-	<!--&lt;!&ndash; 监听服务，通过注册中心去进行查找，查找到后进行服务调用 &ndash;&gt;-->
-	<dubbo:reference id="goodsServiceRpc" interface="com.geekq.api.service.GoodsService"
-		retries="3" check="false" init="true" timeout="3000" group="goods2"></dubbo:reference>
+	<dubbo:reference id="goodsService" interface="com.geekq.api.service.GoodsService"
+		retries="3" check="false" init="true" timeout="5000" registry="miaosha"/>
 </beans>

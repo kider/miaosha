@@ -1,20 +1,20 @@
 package com.geekq.miaosha.controller;
 
 import com.geekq.api.entity.GoodsVoOrder;
+import com.geekq.api.service.GoodsService;
 import com.geekq.api.utils.AbstractResultOrder;
 import com.geekq.api.utils.ResultGeekQOrder;
 import com.geekq.miaosha.interceptor.RequireLogin;
 import com.geekq.miaosha.redis.GoodsKey;
 import com.geekq.miaosha.redis.RedisService;
-import com.geekq.miaosha.service.GoodsService;
 import com.geekq.miaosha.service.MiaoShaUserService;
 import com.geekq.miasha.entity.MiaoshaUser;
 import com.geekq.miasha.enums.enums.ResultStatus;
 import com.geekq.miasha.enums.resultbean.ResultGeekQ;
 import com.geekq.miasha.exception.GlobleException;
 import com.geekq.miasha.vo.GoodsDetailVo;
-import com.geekq.miasha.vo.GoodsVo;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +34,9 @@ import java.util.List;
 @Controller
 @RequestMapping("/goods")
 public class GoodsController extends BaseController {
+
     private static Logger log = LoggerFactory.getLogger(GoodsController.class);
+
     @Autowired
     ThymeleafViewResolver viewResolver;
     @Autowired
@@ -43,10 +45,9 @@ public class GoodsController extends BaseController {
     private MiaoShaUserService userService;
     @Autowired
     private RedisService redisService;
-    @Autowired
+
+    @DubboReference
     private GoodsService goodsService;
-    @Autowired
-    private com.geekq.api.service.GoodsService goodsServiceRpc;
 
     /**
      * QPS:1267 load:15 mysql
@@ -60,7 +61,7 @@ public class GoodsController extends BaseController {
         model.addAttribute("user", user);
 
         //订单服务化接口 miaosha-order
-        ResultGeekQOrder<List<GoodsVoOrder>> resultGoods = goodsServiceRpc.listGoodsVo();
+        ResultGeekQOrder<List<GoodsVoOrder>> resultGoods = goodsService.listGoodsVo();
 
         if (!AbstractResultOrder.isSuccess(resultGoods)) {
             throw new GlobleException(ResultStatus.SYSTEM_ERROR);
@@ -81,15 +82,14 @@ public class GoodsController extends BaseController {
         if (!StringUtils.isEmpty(html)) {
             return html;
         }
-        //手动渲染
-        GoodsVo goods = goodsService.getGoodsVoByGoodsId(goodsId);
         /**
          * rpc服务化接口
          */
-        ResultGeekQOrder<GoodsVoOrder> goodsVoOrderResultGeekQOrder = goodsServiceRpc.getGoodsVoByGoodsId(goodsId);
+        ResultGeekQOrder<GoodsVoOrder> goodsVoOrderResultGeekQOrder = goodsService.getGoodsVoByGoodsId(goodsId);
         if (!AbstractResultOrder.isSuccess(goodsVoOrderResultGeekQOrder)) {
             throw new GlobleException(ResultStatus.SESSION_ERROR);
         }
+        GoodsVoOrder goods = goodsVoOrderResultGeekQOrder.getData();
         model.addAttribute("goods", goods);
 
         long startAt = goods.getStartDate().getTime();
@@ -144,7 +144,7 @@ public class GoodsController extends BaseController {
         /**
          * 服务化rpc接口
          */
-        ResultGeekQOrder<GoodsVoOrder> goodsVoOrderResultGeekQOrder = goodsServiceRpc.getGoodsVoByGoodsId(goodsId);
+        ResultGeekQOrder<GoodsVoOrder> goodsVoOrderResultGeekQOrder = goodsService.getGoodsVoByGoodsId(goodsId);
         if (!AbstractResultOrder.isSuccess(goodsVoOrderResultGeekQOrder)) {
             throw new GlobleException(ResultStatus.SESSION_ERROR);
         }
@@ -173,4 +173,5 @@ public class GoodsController extends BaseController {
         result.setData(vo);
         return result;
     }
+
 }

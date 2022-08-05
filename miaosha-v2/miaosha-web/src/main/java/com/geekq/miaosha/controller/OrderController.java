@@ -1,14 +1,16 @@
 package com.geekq.miaosha.controller;
 
+import com.geekq.api.entity.GoodsVoOrder;
+import com.geekq.api.service.GoodsService;
+import com.geekq.api.utils.ResultGeekQOrder;
 import com.geekq.miaosha.redis.RedisService;
-import com.geekq.miaosha.service.GoodsService;
 import com.geekq.miaosha.service.MiaoShaUserService;
 import com.geekq.miaosha.service.OrderService;
 import com.geekq.miasha.entity.MiaoshaUser;
 import com.geekq.miasha.entity.OrderInfo;
 import com.geekq.miasha.enums.resultbean.ResultGeekQ;
-import com.geekq.miasha.vo.GoodsVo;
 import com.geekq.miasha.vo.OrderDetailVo;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,7 +35,7 @@ public class OrderController {
     @Autowired
     OrderService orderService;
 
-    @Autowired
+    @DubboReference
     GoodsService goodsService;
 
     @RequestMapping("/detail")
@@ -51,10 +53,10 @@ public class OrderController {
             return result;
         }
         long goodsId = order.getGoodsId();
-        GoodsVo goods = goodsService.getGoodsVoByGoodsId(goodsId);
+        ResultGeekQOrder<GoodsVoOrder> resultGeekQOrder = goodsService.getGoodsVoByGoodsId(goodsId);
         OrderDetailVo vo = new OrderDetailVo();
         vo.setOrder(order);
-        vo.setGoods(goods);
+        vo.setGoods(resultGeekQOrder.getData());
         result.setData(vo);
         return result;
     }

@@ -1,16 +1,17 @@
 package com.geekq.miaosha.rabbitmq;
 
 import com.geekq.api.entity.GoodsVoOrder;
+import com.geekq.api.service.GoodsService;
 import com.geekq.api.utils.AbstractResultOrder;
 import com.geekq.api.utils.ResultGeekQOrder;
 import com.geekq.miaosha.redis.RedisService;
-import com.geekq.miaosha.service.GoodsService;
 import com.geekq.miaosha.service.MiaoshaService;
 import com.geekq.miaosha.service.OrderService;
 import com.geekq.miasha.entity.MiaoshaOrder;
 import com.geekq.miasha.entity.MiaoshaUser;
 import com.geekq.miasha.enums.enums.ResultStatus;
 import com.geekq.miasha.exception.GlobleException;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -25,7 +26,7 @@ public class MQReceiver {
     @Autowired
     RedisService redisService;
 
-    @Autowired
+    @DubboReference
     GoodsService goodsService;
 
     @Autowired
@@ -33,9 +34,6 @@ public class MQReceiver {
 
     @Autowired
     MiaoshaService miaoshaService;
-
-    @Autowired
-    private com.geekq.api.service.GoodsService goodsServiceRpc;
 
 //		@Autowired
 //        MiaoShaMessageService messageService ;
@@ -47,8 +45,7 @@ public class MQReceiver {
         MiaoshaUser user = mm.getUser();
         long goodsId = mm.getGoodsId();
 
-//			GoodsVo goods = goodsService.getGoodsVoByGoodsId(goodsId);
-        ResultGeekQOrder<GoodsVoOrder> goodsVoOrderResultGeekQOrder = goodsServiceRpc.getGoodsVoByGoodsId(goodsId);
+        ResultGeekQOrder<GoodsVoOrder> goodsVoOrderResultGeekQOrder = goodsService.getGoodsVoByGoodsId(goodsId);
         if (!AbstractResultOrder.isSuccess(goodsVoOrderResultGeekQOrder)) {
             throw new GlobleException(ResultStatus.SESSION_ERROR);
         }

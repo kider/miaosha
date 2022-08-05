@@ -6,21 +6,20 @@ import com.geekq.api.service.GoodsService;
 import com.geekq.api.utils.ResultGeekQOrder;
 import com.geekq.api.utils.ResultStatusOrder;
 import com.geekq.provider.mapper.GoodsMapper;
+import org.apache.dubbo.config.annotation.DubboService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
  * @author 邱润泽
  */
-@Service("goodsService")
+@DubboService
 public class GoodsServiceImpl implements GoodsService {
 
     private static Logger logger = LoggerFactory.getLogger(GoodsServiceImpl.class);
-
 
     @Autowired
     GoodsMapper goodsMapper;

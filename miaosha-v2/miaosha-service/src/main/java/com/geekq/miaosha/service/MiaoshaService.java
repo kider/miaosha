@@ -2,6 +2,7 @@ package com.geekq.miaosha.service;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.geekq.api.entity.GoodsVoOrder;
+import com.geekq.api.service.GoodsService;
 import com.geekq.miaosha.redis.MiaoshaKey;
 import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miasha.entity.MiaoshaOrder;
@@ -9,6 +10,7 @@ import com.geekq.miasha.entity.MiaoshaUser;
 import com.geekq.miasha.entity.OrderInfo;
 import com.geekq.miasha.utils.MD5Utils;
 import com.geekq.miasha.utils.UUIDUtil;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,15 +25,13 @@ import java.util.Random;
 public class MiaoshaService {
 
     private static char[] ops = new char[]{'+', '-', '*'};
-    @Autowired
+
+    @DubboReference
     GoodsService goodsService;
     @Autowired
     OrderService orderService;
     @Autowired
     RedisService redisService;
-
-    @Reference(version = "${demo.service.version}", retries = 3, timeout = 6000)
-    private com.geekq.api.service.GoodsService goodsServiceRpc;
 
     private static int calc(String exp) {
         try {
@@ -48,8 +48,7 @@ public class MiaoshaService {
     @Transactional
     public OrderInfo miaosha(MiaoshaUser user, GoodsVoOrder goods) {
         //减库存 下订单 写入秒杀订单
-//		boolean success = goodsService.reduceStock(goods);
-        boolean success = goodsServiceRpc.reduceStock(goods);
+        boolean success = goodsService.reduceStock(goods);
         if (success) {
             return orderService.createOrder(user, goods);
         } else {

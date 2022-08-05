@@ -1,5 +1,6 @@
 package com.geekq.miasha.vo;
 
+import com.geekq.api.entity.GoodsVoOrder;
 import com.geekq.miasha.entity.OrderInfo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,14 +12,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderDetailVo {
-    private GoodsVo goods;
+    private GoodsVoOrder goods;
     private OrderInfo order;
 
-    public GoodsVo getGoods() {
+    public GoodsVoOrder getGoods() {
         return goods;
     }
 
-    public void setGoods(GoodsVo goods) {
+    public void setGoods(GoodsVoOrder goods) {
         this.goods = goods;
     }
 

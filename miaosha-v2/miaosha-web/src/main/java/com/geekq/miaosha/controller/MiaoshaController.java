@@ -1,19 +1,22 @@
 package com.geekq.miaosha.controller;
 
+import com.alibaba.dubbo.common.utils.CollectionUtils;
+import com.geekq.api.entity.GoodsVoOrder;
+import com.geekq.api.service.GoodsService;
+import com.geekq.api.utils.ResultGeekQOrder;
 import com.geekq.miaosha.interceptor.RequireLogin;
 import com.geekq.miaosha.rabbitmq.MQSender;
 import com.geekq.miaosha.rabbitmq.MiaoshaMessage;
 import com.geekq.miaosha.redis.GoodsKey;
 import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miaosha.redis.redismanager.RedisLimitRateWithLUA;
-import com.geekq.miaosha.service.GoodsService;
 import com.geekq.miaosha.service.MiaoShaUserService;
 import com.geekq.miaosha.service.MiaoshaService;
 import com.geekq.miaosha.service.OrderService;
 import com.geekq.miasha.entity.MiaoshaOrder;
 import com.geekq.miasha.entity.MiaoshaUser;
 import com.geekq.miasha.enums.resultbean.ResultGeekQ;
-import com.geekq.miasha.vo.GoodsVo;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -47,7 +50,7 @@ public class MiaoshaController implements InitializingBean {
     @Autowired
     RedisService redisService;
 
-    @Autowired
+    @DubboReference
     GoodsService goodsService;
 
     @Autowired
@@ -225,11 +228,11 @@ public class MiaoshaController implements InitializingBean {
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        List<GoodsVo> goodsList = goodsService.listGoodsVo();
-        if (goodsList == null) {
+        ResultGeekQOrder<List<GoodsVoOrder>> result = goodsService.listGoodsVo();
+        if (null != result && CollectionUtils.isNotEmpty(result.getData())) {
             return;
         }
-        for (GoodsVo goods : goodsList) {
+        for (GoodsVoOrder goods : result.getData()) {
             redisService.set(GoodsKey.getMiaoshaGoodsStock, "" + goods.getId(), goods.getStockCount());
             localOverMap.put(goods.getId(), false);
         }

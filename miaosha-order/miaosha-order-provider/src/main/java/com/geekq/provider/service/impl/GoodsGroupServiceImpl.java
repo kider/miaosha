@@ -10,7 +10,6 @@ import java.util.List;
 /**
  * @author 邱润泽
  */
-@Service("goodGroupService")
 public class GoodsGroupServiceImpl implements GoodsService {
     @Override
     public ResultGeekQOrder<List<GoodsVoOrder>> listGoodsVo() {

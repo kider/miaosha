@@ -3,7 +3,6 @@ package com.geekq.provider;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ImportResource;
 
 /**
  * DubboProviderApplication
@@ -12,12 +11,13 @@ import org.springframework.context.annotation.ImportResource;
  * @author geekq
  * @date 2018/6/7
  */
-@ImportResource(value = {"classpath:provider.xml"})
 @SpringBootApplication
 @MapperScan("com.geekq.provider.mapper")
 public class DubboProviderApplication {
 
     public static void main(String[] args) {
+        //zookeeper 较验SASL问题
+        System.setProperty("zookeeper.sasl.client", "false");
         SpringApplication.run(DubboProviderApplication.class, args);
     }
 }
