@@ -1,13 +1,11 @@
 package com.geekq.dubbo.springboot.consumer;
 
-import com.alibaba.dubbo.spring.boot.annotation.EnableDubboConfiguration;
 import com.geekq.dubbo.springboot.consumer.transaction.TransactionConsumer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
-@EnableDubboConfiguration
 public class ConsumerApplication {
 
     public static void main(String[] args) {

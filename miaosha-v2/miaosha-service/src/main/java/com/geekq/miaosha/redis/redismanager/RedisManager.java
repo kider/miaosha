@@ -9,10 +9,14 @@ public class RedisManager {
     private static JedisPool jedisPool;
 
     static {
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxWaitMillis(20);
-        jedisPoolConfig.setMaxIdle(10);
-        jedisPool = new JedisPool(jedisPoolConfig, "39.107.245.253");
+        try {
+            JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+            jedisPoolConfig.setMaxWaitMillis(20);
+            jedisPoolConfig.setMaxIdle(10);
+            jedisPool = new JedisPool(jedisPoolConfig, "www.coolboy.fun", 1234, 500, "xxxx");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static Jedis getJedis() throws Exception {
