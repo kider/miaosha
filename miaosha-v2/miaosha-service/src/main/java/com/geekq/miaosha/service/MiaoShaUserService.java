@@ -184,4 +184,9 @@ public class MiaoShaUserService {
         cookie.setPath("/");
         response.addCookie(cookie);
     }
+
+    public static void main(String[] args) {
+        String calcPass = MD5Utils.formPassToDBPass("123456", "1a2b3c4d");
+        System.out.println(calcPass);
+    }
 }

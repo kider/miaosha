@@ -9,21 +9,17 @@ public class RedisManager {
     private static JedisPool jedisPool;
 
     static {
-        try {
-            JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-            jedisPoolConfig.setMaxWaitMillis(20);
-            jedisPoolConfig.setMaxIdle(10);
-            jedisPool = new JedisPool(jedisPoolConfig, "www.coolboy.fun", 1234, 500, "xxxx");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
+        jedisPoolConfig.setMaxWaitMillis(20);
+        jedisPoolConfig.setMaxIdle(10);
+        jedisPool = new JedisPool(jedisPoolConfig, "www.coolboy.fun", 1234, 500, "xxxx");
     }
 
-    public static Jedis getJedis() throws Exception {
+    public static Jedis getJedis() throws RuntimeException {
         if (null != jedisPool) {
             return jedisPool.getResource();
         }
-        throw new Exception("Jedispool was not init !!!");
+        throw new RuntimeException("Jedispool was not init !!!");
     }
 
 
