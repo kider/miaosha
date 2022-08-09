@@ -26,16 +26,9 @@ public class LoginController {
     @Autowired
     private MiaoShaUserService userService;
 
-    @RequestMapping("/sayHello")
-    public String sayHello() throws Exception {
-        return "login222";
-    }
-
-
     @RequestMapping("/to_login")
     public String tologin(LoginVo loginVo, Model model) {
         logger.info(loginVo.toString());
-
         //未完成
         RedisLua.vistorCount(COUNTLOGIN);
         String count = RedisLua.getVistorCount(COUNTLOGIN).toString();
