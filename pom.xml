@@ -34,10 +34,8 @@
     <name>miaosha-parent</name>
     <modules>
         <module>miaosha-v2</module>
-        <!--<module>miaosha-v1</module>-->
         <module>miaosha-admin</module>
         <module>miaosha-order</module>
-        <module>miaosha-rpc</module>
     </modules>
 
     <dependencyManagement>
