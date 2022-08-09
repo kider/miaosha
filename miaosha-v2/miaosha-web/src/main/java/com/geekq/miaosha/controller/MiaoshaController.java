@@ -229,12 +229,11 @@ public class MiaoshaController implements InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         ResultGeekQOrder<List<GoodsVoOrder>> result = goodsService.listGoodsVo();
-        if (null != result && CollectionUtils.isNotEmpty(result.getData())) {
-            return;
-        }
-        for (GoodsVoOrder goods : result.getData()) {
-            redisService.set(GoodsKey.getMiaoshaGoodsStock, "" + goods.getId(), goods.getStockCount());
-            localOverMap.put(goods.getId(), false);
+        if (CollectionUtils.isNotEmpty(result.getData())) {
+            for (GoodsVoOrder goods : result.getData()) {
+                redisService.set(GoodsKey.getMiaoshaGoodsStock, "" + goods.getId(), goods.getStockCount());
+                localOverMap.put(goods.getId(), false);
+            }
         }
     }
 }
