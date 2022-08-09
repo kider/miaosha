@@ -34,7 +34,7 @@
     <name>miaosha-parent</name>
     <modules>
         <module>miaosha-v2</module>
-        <module>miaosha-admin</module>
+        <!--<module>miaosha-admin</module>-->
         <module>miaosha-order</module>
     </modules>
 
