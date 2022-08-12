@@ -1,19 +1,20 @@
 package com.geekq.miaosha.service;
 
-import com.alibaba.dubbo.config.annotation.Reference;
-import com.geekq.api.entity.GoodsVoOrder;
+import com.geekq.api.base.AbstractResult;
+import com.geekq.api.base.Result;
+import com.geekq.api.pojo.Goods;
+import com.geekq.api.pojo.Order;
+import com.geekq.api.pojo.User;
 import com.geekq.api.service.GoodsService;
-import com.geekq.miaosha.redis.MiaoshaKey;
+import com.geekq.api.service.OrderService;
 import com.geekq.miaosha.redis.RedisService;
-import com.geekq.miasha.entity.MiaoshaOrder;
-import com.geekq.miasha.entity.MiaoshaUser;
-import com.geekq.miasha.entity.OrderInfo;
+import com.geekq.miasha.redis.MiaoshaKey;
 import com.geekq.miasha.utils.MD5Utils;
 import com.geekq.miasha.utils.UUIDUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -21,6 +22,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Random;
 
+@Slf4j
 @Service
 public class MiaoshaService {
 
@@ -28,7 +30,7 @@ public class MiaoshaService {
 
     @DubboReference
     GoodsService goodsService;
-    @Autowired
+    @DubboReference
     OrderService orderService;
     @Autowired
     RedisService redisService;
@@ -40,35 +42,35 @@ public class MiaoshaService {
             Integer catch1 = (Integer) engine.eval(exp);
             return catch1.intValue();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
             return 0;
         }
     }
 
-    @Transactional
-    public OrderInfo miaosha(MiaoshaUser user, GoodsVoOrder goods) {
+    public void miaosha(User user, Goods goods) {
         //减库存 下订单 写入秒杀订单
-        boolean success = goodsService.reduceStock(goods);
-        if (success) {
-            return orderService.createOrder(user, goods);
-        } else {
-            //如果库存不存在则内存标记为true
-            setGoodsOver(goods.getId());
-            return null;
+        Result<Boolean> result = goodsService.reduceStock(goods);
+        if (AbstractResult.isSuccess(result)) {
+            Result<Order> orderResult = orderService.createOrder(user, goods);
+            if (!AbstractResult.isSuccess(orderResult)) {
+                log.error("创建订单失败");
+                return;
+            }
         }
+        //如果库存不存在则内存标记为true
+        setGoodsOver(goods.getId());
     }
 
     public long getMiaoshaResult(Long userId, long goodsId) {
-        MiaoshaOrder order = orderService.getMiaoshaOrderByUserIdGoodsId(userId, goodsId);
-        if (order != null) {//秒杀成功
-            return order.getOrderId();
+        Result<Order> orderResult = orderService.getMiaoshaOrder(userId, goodsId);
+        if (AbstractResult.isSuccess(orderResult)) {
+            return orderResult.getData().getOrderId();
+        }
+        boolean isOver = getGoodsOver(goodsId);
+        if (isOver) {
+            return -1;
         } else {
-            boolean isOver = getGoodsOver(goodsId);
-            if (isOver) {
-                return -1;
-            } else {
-                return 0;
-            }
+            return 0;
         }
     }
 
@@ -80,7 +82,7 @@ public class MiaoshaService {
         return redisService.exists(MiaoshaKey.isGoodsOver, "" + goodsId);
     }
 
-    public boolean checkPath(MiaoshaUser user, long goodsId, String path) {
+    public boolean checkPath(User user, long goodsId, String path) {
         if (user == null || path == null) {
             return false;
         }
@@ -88,7 +90,7 @@ public class MiaoshaService {
         return path.equals(pathOld);
     }
 
-    public String createMiaoshaPath(MiaoshaUser user, long goodsId) {
+    public String createMiaoshaPath(User user, long goodsId) {
         if (user == null || goodsId <= 0) {
             return null;
         }
@@ -97,7 +99,7 @@ public class MiaoshaService {
         return str;
     }
 
-    public BufferedImage createVerifyCode(MiaoshaUser user, long goodsId) {
+    public BufferedImage createVerifyCode(User user, long goodsId) {
         if (user == null || goodsId <= 0) {
             return null;
         }
@@ -181,7 +183,7 @@ public class MiaoshaService {
         return image;
     }
 
-    public boolean checkVerifyCode(MiaoshaUser user, long goodsId, int verifyCode) {
+    public boolean checkVerifyCode(User user, long goodsId, int verifyCode) {
         if (user == null || goodsId <= 0) {
             return false;
         }

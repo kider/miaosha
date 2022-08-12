@@ -1,18 +1,18 @@
 package com.geekq.miasha.utils;
 
 
-import com.geekq.miasha.entity.MiaoshaUser;
+import com.geekq.api.pojo.User;
 
 public class UserContext {
 
-    private static ThreadLocal<MiaoshaUser> userHolder = new ThreadLocal<MiaoshaUser>();
+    private static ThreadLocal<User> userHolder = new ThreadLocal<User>();
 
-    public static MiaoshaUser getUser() {
+    public static User getUser() {
 
         return userHolder.get();
     }
 
-    public static void setUser(MiaoshaUser user) {
+    public static void setUser(User user) {
         userHolder.set(user);
     }
 

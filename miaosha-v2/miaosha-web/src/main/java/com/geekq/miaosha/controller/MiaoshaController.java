@@ -1,28 +1,26 @@
 package com.geekq.miaosha.controller;
 
-import com.alibaba.dubbo.common.utils.CollectionUtils;
-import com.geekq.api.entity.GoodsVoOrder;
+import com.geekq.api.base.AbstractResult;
+import com.geekq.api.base.Result;
+import com.geekq.api.pojo.Goods;
+import com.geekq.api.pojo.Order;
+import com.geekq.api.pojo.User;
 import com.geekq.api.service.GoodsService;
-import com.geekq.api.utils.ResultGeekQOrder;
+import com.geekq.api.service.OrderService;
 import com.geekq.miaosha.interceptor.RequireLogin;
 import com.geekq.miaosha.rabbitmq.MQSender;
 import com.geekq.miaosha.rabbitmq.MiaoshaMessage;
-import com.geekq.miaosha.redis.GoodsKey;
 import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miaosha.redis.redismanager.RedisLimitRateWithLUA;
-import com.geekq.miaosha.service.MiaoShaUserService;
 import com.geekq.miaosha.service.MiaoshaService;
-import com.geekq.miaosha.service.OrderService;
-import com.geekq.miasha.entity.MiaoshaOrder;
-import com.geekq.miasha.entity.MiaoshaUser;
-import com.geekq.miasha.enums.resultbean.ResultGeekQ;
+import com.geekq.miasha.redis.GoodsKey;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
@@ -35,17 +33,13 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.geekq.miasha.enums.enums.ResultStatus.*;
+import static com.geekq.api.base.enums.ResultStatus.*;
 
 
+@Slf4j
 @Controller
 @RequestMapping("/miaosha")
 public class MiaoshaController implements InitializingBean {
-
-    private static Logger logger = LoggerFactory.getLogger(MiaoshaController.class);
-
-    @Autowired
-    MiaoShaUserService userService;
 
     @Autowired
     RedisService redisService;
@@ -53,7 +47,7 @@ public class MiaoshaController implements InitializingBean {
     @DubboReference
     GoodsService goodsService;
 
-    @Autowired
+    @DubboReference
     OrderService orderService;
 
     @Autowired
@@ -72,10 +66,9 @@ public class MiaoshaController implements InitializingBean {
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/{path}/do_miaosha", method = RequestMethod.POST)
     @ResponseBody
-    public ResultGeekQ<Integer> miaosha(Model model, MiaoshaUser user, @PathVariable("path") String path,
-                                        @RequestParam("goodsId") long goodsId) {
-        ResultGeekQ<Integer> result = ResultGeekQ.build();
-
+    public Result<Integer> miaosha(Model model, User user, @PathVariable("path") String path,
+                                   @RequestParam("goodsId") long goodsId) {
+        Result<Integer> result = Result.build();
         if (user == null) {
             result.withError(SESSION_ERROR.getCode(), SESSION_ERROR.getMessage());
             return result;
@@ -86,14 +79,14 @@ public class MiaoshaController implements InitializingBean {
             result.withError(REQUEST_ILLEGAL.getCode(), REQUEST_ILLEGAL.getMessage());
             return result;
         }
-//		//使用RateLimiter 限流
-//		RateLimiter rateLimiter = RateLimiter.create(10);
-//		//判断能否在1秒内得到令牌，如果不能则立即返回false，不会阻塞程序
-//		if (!rateLimiter.tryAcquire(1000, TimeUnit.MILLISECONDS)) {
-//			System.out.println("短期无法获取令牌，真不幸，排队也瞎排");
-//			return ResultGeekQ.error(CodeMsg.MIAOSHA_FAIL);
-//
-//		}
+        //使用RateLimiter 限流
+        /*
+        RateLimiter rateLimiter = RateLimiter.create(10);
+        //判断能否在1秒内得到令牌，如果不能则立即返回false，不会阻塞程序
+        if (!rateLimiter.tryAcquire(1000, TimeUnit.MILLISECONDS)) {
+            System.out.println("短期无法获取令牌，真不幸，排队也瞎排");
+            return ResultGeekQ.error(MIAOSHA_FAIL);
+        }*/
 
         /**
          * 分布式限流
@@ -109,8 +102,8 @@ public class MiaoshaController implements InitializingBean {
         }
 
         //是否已经秒杀到
-        MiaoshaOrder order = orderService.getMiaoshaOrderByUserIdGoodsId(Long.valueOf(user.getNickname()), goodsId);
-        if (order != null) {
+        Result<Order> orderResult = orderService.getMiaoshaOrder(Long.valueOf(user.getNickname()), goodsId);
+        if (!AbstractResult.isSuccess(orderResult)) {
             result.withError(EXCEPTION.getCode(), REPEATE_MIAOSHA.getMessage());
             return result;
         }
@@ -143,9 +136,9 @@ public class MiaoshaController implements InitializingBean {
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/result", method = RequestMethod.GET)
     @ResponseBody
-    public ResultGeekQ<Long> miaoshaResult(Model model, MiaoshaUser user,
-                                           @RequestParam("goodsId") long goodsId) {
-        ResultGeekQ<Long> result = ResultGeekQ.build();
+    public Result<Long> miaoshaResult(Model model, User user,
+                                      @RequestParam("goodsId") long goodsId) {
+        Result<Long> result = Result.build();
         if (user == null) {
             result.withError(SESSION_ERROR.getCode(), SESSION_ERROR.getMessage());
             return result;
@@ -159,11 +152,11 @@ public class MiaoshaController implements InitializingBean {
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/path", method = RequestMethod.GET)
     @ResponseBody
-    public ResultGeekQ<String> getMiaoshaPath(HttpServletRequest request, MiaoshaUser user,
-                                              @RequestParam("goodsId") long goodsId,
-                                              @RequestParam(value = "verifyCode", defaultValue = "0") int verifyCode
+    public Result<String> getMiaoshaPath(HttpServletRequest request, User user,
+                                         @RequestParam("goodsId") long goodsId,
+                                         @RequestParam(value = "verifyCode", defaultValue = "0") int verifyCode
     ) {
-        ResultGeekQ<String> result = ResultGeekQ.build();
+        Result<String> result = Result.build();
         if (user == null) {
             result.withError(SESSION_ERROR.getCode(), SESSION_ERROR.getMessage());
             return result;
@@ -180,9 +173,9 @@ public class MiaoshaController implements InitializingBean {
 
     @RequestMapping(value = "/verifyCodeRegister", method = RequestMethod.GET)
     @ResponseBody
-    public ResultGeekQ<String> getMiaoshaVerifyCod(HttpServletResponse response
+    public Result<String> getMiaoshaVerifyCode(HttpServletResponse response
     ) {
-        ResultGeekQ<String> result = ResultGeekQ.build();
+        Result<String> result = Result.build();
         try {
             BufferedImage image = miaoshaService.createVerifyCodeRegister();
             OutputStream out = response.getOutputStream();
@@ -191,18 +184,25 @@ public class MiaoshaController implements InitializingBean {
             out.close();
             return result;
         } catch (Exception e) {
-            logger.error("生成验证码错误-----注册:{}", e);
+            log.error("生成验证码错误-----注册:{}", e);
             result.withError(MIAOSHA_FAIL.getCode(), MIAOSHA_FAIL.getMessage());
             return result;
         }
     }
 
-
+    /**
+     * 刷新验证码
+     *
+     * @param response
+     * @param user
+     * @param goodsId
+     * @return
+     */
     @RequestMapping(value = "/verifyCode", method = RequestMethod.GET)
     @ResponseBody
-    public ResultGeekQ<String> getMiaoshaVerifyCod(HttpServletResponse response, MiaoshaUser user,
-                                                   @RequestParam("goodsId") long goodsId) {
-        ResultGeekQ<String> result = ResultGeekQ.build();
+    public Result<String> getMiaoshaVerifyCode(HttpServletResponse response, User user,
+                                               @RequestParam("goodsId") long goodsId) {
+        Result<String> result = Result.build();
         if (user == null) {
             result.withError(SESSION_ERROR.getCode(), SESSION_ERROR.getMessage());
             return result;
@@ -215,7 +215,7 @@ public class MiaoshaController implements InitializingBean {
             out.close();
             return result;
         } catch (Exception e) {
-            logger.error("生成验证码错误-----goodsId:{}", goodsId, e);
+            log.error("生成验证码错误-----goodsId:{}", goodsId, e);
             result.withError(MIAOSHA_FAIL.getCode(), MIAOSHA_FAIL.getMessage());
             return result;
         }
@@ -228,9 +228,9 @@ public class MiaoshaController implements InitializingBean {
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        ResultGeekQOrder<List<GoodsVoOrder>> result = goodsService.listGoodsVo();
-        if (CollectionUtils.isNotEmpty(result.getData())) {
-            for (GoodsVoOrder goods : result.getData()) {
+        Result<List<Goods>> result = goodsService.list();
+        if (!CollectionUtils.isEmpty(result.getData())) {
+            for (Goods goods : result.getData()) {
                 redisService.set(GoodsKey.getMiaoshaGoodsStock, "" + goods.getId(), goods.getStockCount());
                 localOverMap.put(goods.getId(), false);
             }

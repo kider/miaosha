@@ -1,7 +1,6 @@
 package com.geekq.miaosha.redis.redismanager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
@@ -10,9 +9,8 @@ import java.util.List;
 /**
  * lua脚本使用
  */
+@Slf4j
 public class RedisLua {
-
-    private static Logger logger = LoggerFactory.getLogger(RedisLua.class);
 
     /**
      * 未完成  需 evalsha更方便 限制ip 或者 手机号访问次数
@@ -23,7 +21,7 @@ public class RedisLua {
         try {
             jedis = RedisManager.getJedis();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
         String lua =
                 "local num=redis.call('incr',KEYS[1]) if tonumber(num)==1 " +
@@ -36,19 +34,14 @@ public class RedisLua {
         List<String> argves = new ArrayList<String>();
         argves.add("6000");
         argves.add("5");
-        jedis.auth("xxxx");
-//        Object evalSha = jedis.evalsha(lua);
         String luaScript = jedis.scriptLoad(lua);
-        System.out.println(luaScript);
         Object object = jedis.evalsha(luaScript, keys, argves);
-        System.out.println(object);
     }
 
     /**
      * 统计访问次数
      */
     public static Object getVistorCount(String key) {
-
         Jedis jedis = null;
         Object object = null;
         try {
@@ -59,12 +52,10 @@ public class RedisLua {
             List<String> keys = new ArrayList<String>();
             keys.add(key);
             List<String> argves = new ArrayList<String>();
-            jedis.auth("aptx4869");
             String luaScript = jedis.scriptLoad(count);
-            System.out.println(luaScript);
             object = jedis.evalsha(luaScript, keys, argves);
         } catch (Exception e) {
-            logger.error("统计访问次数失败！！！", e);
+            log.error("统计访问次数失败！！！", e);
             return "0";
         }
         return object;
@@ -74,28 +65,22 @@ public class RedisLua {
      * 统计访问次数
      */
     public static void vistorCount(String key) {
-
         Jedis jedis = null;
-        Object object = null;
         try {
             jedis = RedisManager.getJedis();
-            String count =
-                    "local num=redis.call('incr',KEYS[1]) return num";
+            String count = "local num=redis.call('incr',KEYS[1]) return num";
             List<String> keys = new ArrayList<String>();
             keys.add(key);
             List<String> argves = new ArrayList<String>();
-            jedis.auth("aptx4869");
             String luaScript = jedis.scriptLoad(count);
-            System.out.println(luaScript);
             jedis.evalsha(luaScript, keys, argves);
         } catch (Exception e) {
-            logger.error("统计访问次数失败！！！", e);
+            log.error("统计访问次数失败！！！", e);
         }
     }
 
 
     public static void currentlimitMinute() {
-
         Jedis jedis = null;
         try {
             jedis = RedisManager.getJedis();
@@ -116,13 +101,8 @@ public class RedisLua {
         List<String> argves = new ArrayList<String>();
         argves.add("6000");
         argves.add("5");
-        jedis.auth("aptx4869");
-
-//        Object evalSha = jedis.evalsha(lua);
         String luaScript = jedis.scriptLoad(lua);
-        System.out.println(luaScript);
-        Object object = jedis.evalsha(luaScript, keys, argves);
-        System.out.println(object);
+        jedis.evalsha(luaScript, keys, argves);
     }
 
 }

@@ -1,57 +1,43 @@
 package com.geekq.miaosha.controller;
 
-import com.geekq.miaosha.redis.redismanager.RedisLua;
-import com.geekq.miaosha.service.MiaoShaUserService;
-import com.geekq.miasha.enums.resultbean.ResultGeekQ;
-import com.geekq.miasha.vo.LoginVo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.geekq.api.base.AbstractResult;
+import com.geekq.api.base.Result;
+import com.geekq.api.base.enums.ResultStatus;
+import com.geekq.api.service.UserService;
+import com.geekq.miaosha.utils.CookieUtils;
+import com.geekq.miasha.utils.UUIDUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 
-import static com.geekq.miasha.enums.Constanst.COUNTLOGIN;
-
+@Slf4j
 @Controller
 @RequestMapping("/login")
 public class LoginController {
 
-    private static Logger logger = LoggerFactory.getLogger(LoginController.class);
-
-    @Autowired
-    private MiaoShaUserService userService;
-
-    @RequestMapping("/to_login")
-    public String tologin(LoginVo loginVo, Model model) {
-        logger.info(loginVo.toString());
-        //未完成
-        RedisLua.vistorCount(COUNTLOGIN);
-        String count = RedisLua.getVistorCount(COUNTLOGIN).toString();
-        logger.info("访问网站的次数为:{}", count);
-        model.addAttribute("count", count);
-        return "login";
-    }
+    @DubboReference
+    private UserService userService;
 
     @RequestMapping("/loginin")
     @ResponseBody
-    public ResultGeekQ<String> dologin(HttpServletResponse response, @Valid LoginVo loginVo) {
-        ResultGeekQ<String> result = ResultGeekQ.build();
-        logger.info(loginVo.toString());
-        userService.login(response, loginVo);
-        return result;
-    }
-
-
-    @RequestMapping("/create_token")
-    @ResponseBody
-    public String createToken(HttpServletResponse response, @Valid LoginVo loginVo) {
-        logger.info(loginVo.toString());
-        String token = userService.createToken(response, loginVo);
-        return token;
+    public Result<String> dologin(HttpServletResponse response, @RequestParam String nickname, @RequestParam String password) {
+        String token = UUIDUtil.uuid();
+        Result<Boolean> result = userService.login(nickname, password, token);
+        if (AbstractResult.isSuccess(result)) {
+            Boolean flag = result.getData();
+            //返回错误信息
+            if (!flag) {
+                return Result.build(result.getMessage());
+            }
+            //写入Cookie
+            CookieUtils.addUserCookie(response, token);
+            return Result.build();
+        }
+        return Result.error(ResultStatus.EXCEPTION);
     }
 }

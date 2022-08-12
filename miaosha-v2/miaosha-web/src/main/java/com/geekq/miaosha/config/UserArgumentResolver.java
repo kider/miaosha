@@ -1,9 +1,7 @@
 package com.geekq.miaosha.config;
 
-import com.geekq.miaosha.service.MiaoShaUserService;
-import com.geekq.miasha.entity.MiaoshaUser;
+import com.geekq.api.pojo.User;
 import com.geekq.miasha.utils.UserContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -14,13 +12,10 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @Service
 public class UserArgumentResolver implements HandlerMethodArgumentResolver {
 
-    @Autowired
-    private MiaoShaUserService userService;
-
     @Override
     public boolean supportsParameter(MethodParameter methodParameter) {
         Class<?> clazz = methodParameter.getParameterType();
-        return clazz == MiaoshaUser.class;
+        return clazz == User.class;
     }
 
     @Override

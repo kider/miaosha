@@ -1,11 +1,10 @@
 package com.geekq.miasha.vo;
 
-import com.geekq.miasha.entity.Goods;
+import com.geekq.api.pojo.Goods;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.ibatis.type.Alias;
 
 import java.util.Date;
 
@@ -13,7 +12,6 @@ import java.util.Date;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Alias("goodsVo")
 public class GoodsVo extends Goods {
     private Double miaoshaPrice;
     private Integer stockCount;

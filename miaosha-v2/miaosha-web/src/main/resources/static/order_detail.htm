@@ -92,7 +92,7 @@ function getOrderDetail(){
 			if(data.code == 0){
 				render(data.data);
 			}else{
-				layer.msg(data.msg);
+				layer.msg(data.message);
 			}
 		},
 		error:function(){

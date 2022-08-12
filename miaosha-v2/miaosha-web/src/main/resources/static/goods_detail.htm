@@ -23,7 +23,7 @@
             width:100%;
         }
         body{
-            background:url('/static/img/bg2.jpg') no-repeat;
+            background:url('/img/bg2.jpg') no-repeat;
             background-size:100% 100%;
         }
         #goodslist td{
@@ -103,7 +103,7 @@ function getMiaoshaPath(){
 				var path = data.data;
 				doMiaosha(path);
 			}else{
-				layer.msg(data.msg);
+				layer.msg(data.message);
 			}
 		},
 		error:function(){
@@ -139,7 +139,7 @@ function getMiaoshaResult(goodsId){
 							});
 				}
 			}else{
-				layer.msg(data.msg);
+				layer.msg(data.message);
 			}
 		},
 		error:function(){
@@ -157,10 +157,9 @@ function doMiaosha(path){
 		},
 		success:function(data){
 			if(data.code == 0){
-				//window.location.href="/order_detail.htm?orderId="+data.data.id;
 				getMiaoshaResult($("#goodsId").val());
 			}else{
-				layer.msg(data.msg);
+				layer.msg(data.message);
 			}
 		},
 		error:function(){
@@ -203,7 +202,7 @@ function getDetail(){
 			if(data.code == 0){
 				render(data.data);
 			}else{
-				layer.msg(data.msg);
+				layer.msg(data.message);
 			}
 		},
 		error:function(){

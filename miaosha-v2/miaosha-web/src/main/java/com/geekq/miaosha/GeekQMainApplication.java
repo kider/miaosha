@@ -1,11 +1,10 @@
 package com.geekq.miaosha;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
-@SpringBootApplication
-@MapperScan("com.geekq.miaosha.mapper")
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class GeekQMainApplication {
 
     public static void main(String[] args) throws Exception {

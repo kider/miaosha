@@ -1,8 +1,11 @@
 package com.geekq.miaosha.controller;
 
-import com.geekq.miaosha.service.MiaoShaUserService;
-import com.geekq.miaosha.service.MiaoshaService;
-import com.geekq.miasha.enums.resultbean.ResultGeekQ;
+import com.geekq.api.base.AbstractResult;
+import com.geekq.api.base.Result;
+import com.geekq.api.service.UserService;
+import com.geekq.miaosha.redis.redismanager.RedisLua;
+import com.geekq.miaosha.utils.CookieUtils;
+import com.geekq.miasha.utils.UUIDUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +18,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.geekq.miasha.enums.enums.ResultStatus.RESIGETER_FAIL;
+import static com.geekq.api.base.enums.ResultStatus.RESIGETER_FAIL;
+import static com.geekq.miasha.enums.Constanst.COUNTLOGIN;
 
 
 @Controller
@@ -25,23 +29,18 @@ public class RegisterController {
     private static Logger logger = LoggerFactory.getLogger(RegisterController.class);
 
     @Autowired
-    private MiaoShaUserService miaoShaUserService;
-    @Autowired
-    private MiaoshaService miaoshaService;
+    private UserService userService;
 
 
     /**
      * 登录页面
-     *
-     * @return
      */
-    @RequestMapping("/do_login")
+    @RequestMapping("/login")
     public String loginIndex(Model model) {
-//        //未完成
-//        RedisLua.vistorCount(COUNTLOGIN);
-//        String count = RedisLua.getVistorCount(COUNTLOGIN).toString();
-//        logger.info("访问网站的次数为:{}",count);
-        model.addAttribute("count", 100000);
+        RedisLua.vistorCount(COUNTLOGIN);
+        String count = RedisLua.getVistorCount(COUNTLOGIN).toString();
+        logger.info("访问网站的次数为:{}", count);
+        model.addAttribute("count", count);
         return "login";
     }
 
@@ -52,7 +51,7 @@ public class RegisterController {
      */
     @RequestMapping("/registerv2")
     public String register() {
-        return "register2";
+        return "register";
     }
 
 
@@ -63,12 +62,8 @@ public class RegisterController {
      */
     @RequestMapping("/checkUsername")
     @ResponseBody
-    public ResultGeekQ<Boolean> checkUsername(String username) {
-
-        ResultGeekQ<Boolean> result = ResultGeekQ.build();
-        boolean nickNameCount = miaoShaUserService.getNickNameCount(username);
-        result.setData(nickNameCount);
-        return result;
+    public Result<Boolean> checkUsername(String username) {
+        return userService.getNickNameCount(username);
     }
 
     /**
@@ -80,17 +75,23 @@ public class RegisterController {
      */
     @RequestMapping("/register")
     @ResponseBody
-    public ResultGeekQ<Boolean> register(@RequestParam("username") String userName,
-                                         @RequestParam("password") String passWord,
-                                         HttpServletResponse response,
-                                         HttpServletRequest request) {
-
-        ResultGeekQ<Boolean> result = ResultGeekQ.build();
-        boolean registerInfo = miaoShaUserService.register(userName, passWord, response, request);
-        if (!registerInfo) {
+    public Result<Boolean> register(@RequestParam("username") String userName,
+                                    @RequestParam("password") String passWord,
+                                    HttpServletResponse response,
+                                    HttpServletRequest request) {
+        String token = UUIDUtil.uuid();
+        Boolean isR = false;
+        Result<Boolean> result = userService.register(userName, passWord, token);
+        if (AbstractResult.isSuccess(result)) {
+            isR = result.getData();
+        }
+        if (!isR) {
             result.withError(RESIGETER_FAIL.getCode(), RESIGETER_FAIL.getMessage());
             result.setData(false);
+            return result;
         }
+        //写入Cookie
+        CookieUtils.addUserCookie(response, token);
         result.setData(true);
         return result;
     }

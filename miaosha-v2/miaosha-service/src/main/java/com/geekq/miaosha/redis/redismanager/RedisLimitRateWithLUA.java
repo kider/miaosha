@@ -49,7 +49,7 @@ public class RedisLimitRateWithLUA {
         keys.add(key);
         List<String> args = new ArrayList<String>();
         args.add(limit);
-        jedis.auth("xxxx");
+        jedis.auth("aptx4869");
         String luaScript = jedis.scriptLoad(lua);
         Long result = (Long) jedis.evalsha(luaScript, keys, args);
         return result == 1;

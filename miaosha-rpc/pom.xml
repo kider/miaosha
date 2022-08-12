@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.geekq</groupId>
+        <artifactId>miaosha-parent</artifactId>
+        <version>STABLE-2.1.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <groupId>com.geekq.dubbo</groupId>
+    <artifactId>miaosha-rpc</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>miaosha-service-api</module>
+        <module>miaosha-admin-provider</module>
+        <module>miaosha-goods-provider</module>
+        <module>miaosha-order-provider</module>
+    </modules>
+
+</project>

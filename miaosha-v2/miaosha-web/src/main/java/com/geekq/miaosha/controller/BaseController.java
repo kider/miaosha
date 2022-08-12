@@ -1,7 +1,7 @@
 package com.geekq.miaosha.controller;
 
-import com.geekq.miaosha.redis.KeyPrefix;
 import com.geekq.miaosha.redis.RedisService;
+import com.geekq.miasha.redis.KeyPrefix;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,8 +16,6 @@ import java.io.OutputStream;
 
 @Controller
 public class BaseController {
-
-
     @Autowired
     ThymeleafViewResolver thymeleafViewResolver;
     @Autowired
@@ -39,15 +37,14 @@ public class BaseController {
         }
     }
 
-    public String render(HttpServletRequest request, HttpServletResponse response, Model model, String tplName, KeyPrefix prefix, String key) {
+    public void render(HttpServletRequest request, HttpServletResponse response, Model model, String tplName, KeyPrefix prefix, String key) {
         if (!pageCacheEnable) {
-            return tplName;
+            return;
         }
         //取缓存
         String html = redisService.get(prefix, key, String.class);
         if (!StringUtils.isEmpty(html)) {
             out(response, html);
-            return null;
         }
         //手动渲染
         WebContext ctx = new WebContext(request, response,
@@ -57,6 +54,5 @@ public class BaseController {
             redisService.set(prefix, key, html);
         }
         out(response, html);
-        return null;
     }
 }

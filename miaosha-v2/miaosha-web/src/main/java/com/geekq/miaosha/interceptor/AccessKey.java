@@ -1,6 +1,6 @@
 package com.geekq.miaosha.interceptor;
 
-import com.geekq.miaosha.redis.BasePrefix;
+import com.geekq.miasha.redis.BasePrefix;
 
 public class AccessKey extends BasePrefix {
 

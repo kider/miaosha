@@ -1,6 +1,7 @@
 package com.geekq.miaosha.redis;
 
 import com.alibaba.fastjson.JSON;
+import com.geekq.miasha.redis.KeyPrefix;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,8 +13,8 @@ import redis.clients.jedis.ScanResult;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
 @Slf4j
+@Service
 public class RedisService {
 
     @Autowired

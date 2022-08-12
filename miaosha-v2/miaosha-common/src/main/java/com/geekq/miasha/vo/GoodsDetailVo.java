@@ -1,7 +1,7 @@
 package com.geekq.miasha.vo;
 
-import com.geekq.api.entity.GoodsVoOrder;
-import com.geekq.miasha.entity.MiaoshaUser;
+import com.geekq.api.pojo.Goods;
+import com.geekq.api.pojo.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +15,6 @@ import lombok.Setter;
 public class GoodsDetailVo {
     private int miaoshaStatus = 0;
     private int remainSeconds = 0;
-    private GoodsVoOrder goods;
-    private MiaoshaUser user;
-
+    private Goods goods;
+    private User user;
 }

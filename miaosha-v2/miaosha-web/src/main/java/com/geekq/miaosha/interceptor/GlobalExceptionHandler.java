@@ -1,7 +1,7 @@
 package com.geekq.miaosha.interceptor;
 
-import com.geekq.miasha.enums.resultbean.ResultGeekQ;
-import com.geekq.miasha.exception.GlobleException;
+import com.geekq.api.base.Result;
+import com.geekq.api.base.exception.GlobleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.BindException;
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
 
-import static com.geekq.miasha.enums.enums.ResultStatus.SESSION_ERROR;
-import static com.geekq.miasha.enums.enums.ResultStatus.SYSTEM_ERROR;
+import static com.geekq.api.base.enums.ResultStatus.SESSION_ERROR;
+import static com.geekq.api.base.enums.ResultStatus.SYSTEM_ERROR;
 
 /**
  * @author 邱润泽
@@ -28,11 +28,11 @@ public class GlobalExceptionHandler {
 
     @ResponseBody
     @ExceptionHandler(value = Exception.class)
-    public ResultGeekQ<String> exceptionHandler(Exception e) {
+    public Result<String> exceptionHandler(Exception e) {
         e.printStackTrace();
         if (e instanceof GlobleException) {
             GlobleException ex = (GlobleException) e;
-            return ResultGeekQ.error(ex.getStatus());
+            return Result.error(ex.getStatus());
         } else if (e instanceof BindException) {
             BindException ex = (BindException) e;
             List<ObjectError> errors = ex.getAllErrors();
@@ -42,9 +42,9 @@ public class GlobalExceptionHandler {
              * 打印堆栈信息
              */
             logger.error(String.format(msg, msg));
-            return ResultGeekQ.error(SESSION_ERROR);
+            return Result.error(SESSION_ERROR);
         } else {
-            return ResultGeekQ.error(SYSTEM_ERROR);
+            return Result.error(SYSTEM_ERROR);
         }
     }
 }

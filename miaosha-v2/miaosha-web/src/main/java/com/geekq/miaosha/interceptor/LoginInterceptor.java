@@ -1,15 +1,15 @@
 package com.geekq.miaosha.interceptor;
 
 import com.alibaba.fastjson.JSON;
+import com.geekq.api.base.Result;
+import com.geekq.api.base.enums.ResultStatus;
+import com.geekq.api.pojo.User;
 import com.geekq.miaosha.redis.RedisService;
-import com.geekq.miaosha.service.MiaoShaUserService;
-import com.geekq.miasha.entity.MiaoshaUser;
-import com.geekq.miasha.enums.enums.ResultStatus;
-import com.geekq.miasha.enums.resultbean.ResultGeekQ;
+import com.geekq.miaosha.utils.CookieUtils;
+import com.geekq.miasha.redis.UserKey;
 import com.geekq.miasha.utils.UserContext;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.method.HandlerMethod;
@@ -20,17 +20,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 
-import static com.geekq.miasha.enums.enums.ResultStatus.ACCESS_LIMIT_REACHED;
-import static com.geekq.miasha.enums.enums.ResultStatus.SESSION_ERROR;
+import static com.geekq.api.base.enums.ResultStatus.ACCESS_LIMIT_REACHED;
+import static com.geekq.api.base.enums.ResultStatus.SESSION_ERROR;
 
 
+@Slf4j
 @Service
 public class LoginInterceptor extends HandlerInterceptorAdapter {
-
-    private static Logger logger = LoggerFactory.getLogger(LoginInterceptor.class);
-
-    @Autowired
-    MiaoShaUserService userService;
 
     @Autowired
     RedisService redisService;
@@ -43,18 +39,9 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
          * 获取调用 获取主要方法
          */
         if (handler instanceof HandlerMethod) {
-            logger.info("打印拦截方法handler ：{} ", handler);
+            log.info("打印拦截方法handler ：{} ", handler);
             HandlerMethod hm = (HandlerMethod) handler;
-            MiaoshaUser user = getUser(request, response);
-
-            /**
-             * 去拦截器
-             */
-//			if(user == null){
-//				response.sendRedirect("/do_login");
-//				return super.preHandle(request, response, handler);
-//			}
-
+            User user = getUser(request, response);
             UserContext.setUser(user);
             RequireLogin accessLimit = hm.getMethodAnnotation(RequireLogin.class);
             if (accessLimit == null) {
@@ -70,8 +57,6 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
                     return false;
                 }
                 key += "_" + user.getNickname();
-            } else {
-                //do nothing
             }
             AccessKey ak = AccessKey.withExpire(seconds);
             Integer count = redisService.get(ak, key, Integer.class);
@@ -96,20 +81,21 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
     private void render(HttpServletResponse response, ResultStatus cm) throws Exception {
         response.setContentType("application/json;charset=UTF-8");
         OutputStream out = response.getOutputStream();
-        String str = JSON.toJSONString(ResultGeekQ.error(cm));
+        String str = JSON.toJSONString(Result.error(cm));
         out.write(str.getBytes("UTF-8"));
         out.flush();
         out.close();
     }
 
-    private MiaoshaUser getUser(HttpServletRequest request, HttpServletResponse response) {
-        String paramToken = request.getParameter(MiaoShaUserService.COOKIE_NAME_TOKEN);
-        String cookieToken = getCookieValue(request, MiaoShaUserService.COOKIE_NAME_TOKEN);
+    private User getUser(HttpServletRequest request, HttpServletResponse response) {
+        String paramToken = request.getParameter(CookieUtils.COOKIE_NAME_TOKEN);
+        String cookieToken = getCookieValue(request, CookieUtils.COOKIE_NAME_TOKEN);
         if (StringUtils.isEmpty(cookieToken) && StringUtils.isEmpty(paramToken)) {
             return null;
         }
         String token = StringUtils.isEmpty(paramToken) ? cookieToken : paramToken;
-        return userService.getByToken(response, token);
+        User user = redisService.get(UserKey.token, token, User.class);
+        return user;
     }
 
     private String getCookieValue(HttpServletRequest request, String cookiName) {

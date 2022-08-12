@@ -1,18 +1,17 @@
 package com.geekq.miaosha.redis.redismanager;
 
+import com.geekq.miaosha.utils.SpringUtil;
+import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
 
+@Slf4j
 public class RedisManager {
 
-    private static JedisPool jedisPool;
+    private static JedisPool jedisPool = null;
 
     static {
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxWaitMillis(20);
-        jedisPoolConfig.setMaxIdle(10);
-        jedisPool = new JedisPool(jedisPoolConfig, "www.coolboy.fun", 1234, 500, "xxxx");
+        jedisPool = SpringUtil.getBean(JedisPool.class);
     }
 
     public static Jedis getJedis() throws RuntimeException {
@@ -21,6 +20,5 @@ public class RedisManager {
         }
         throw new RuntimeException("Jedispool was not init !!!");
     }
-
 
 }
