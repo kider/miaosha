@@ -58,7 +58,8 @@ public enum ResultStatus {
     MIAO_SHA_OVER(40001, "商品已经秒杀完毕"),
     REPEATE_MIAOSHA(40002, "不能重复秒杀"),
     MIAOSHA_FAIL(40003, "秒杀失败"),
-    ORDER_GET_FAIL(40004, "订单获取失败");
+    ORDER_GET_FAIL(40004, "订单获取失败"),
+    ORDER_CREATE_FAIL(40005, "订单创建失败");
 
     /**
      * 商品模块

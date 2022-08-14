@@ -4,7 +4,6 @@ import com.geekq.api.base.Result;
 import com.geekq.api.base.enums.ResultStatus;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.service.GoodsService;
-import com.geekq.miasha.utils.ColaBeanUtils;
 import com.geekq.provider.mapper.GoodsMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
@@ -23,7 +22,7 @@ public class GoodsServiceImpl implements GoodsService {
     public Result<List<Goods>> list() {
         Result<List<Goods>> result = Result.build();
         try {
-            result.setData(ColaBeanUtils.copyListProperties(goodsMapper.list(), Goods::new));
+            result.setData(goodsMapper.list());
         } catch (Exception e) {
             log.error("获取订单数据失败！", e);
             result.withError(ResultStatus.ORDER_GET_FAIL);
@@ -35,7 +34,7 @@ public class GoodsServiceImpl implements GoodsService {
     public Result<Goods> getMsGoodsByGoodsId(long goodsId) {
         Result<Goods> result = Result.build();
         try {
-            result.setData(ColaBeanUtils.copyBeanProperties(goodsMapper.getMsGoodsByGoodsId(goodsId), Goods::new));
+            result.setData(goodsMapper.getMsGoodsByGoodsId(goodsId));
         } catch (Exception e) {
             log.error("获取单个订单失败！", e);
             result.withError(ResultStatus.ORDER_GET_FAIL);
@@ -45,7 +44,8 @@ public class GoodsServiceImpl implements GoodsService {
 
     @Override
     public Result<Boolean> reduceStock(Goods goods) {
-        int ret = goodsMapper.reduceStock(ColaBeanUtils.copyBeanProperties(goods, Goods::new));
+        int ret = goodsMapper.reduceStock(goods);
+        log.info("goodsId:" + goods.getGoodsId() + "reduceStock：" + ret);
         return Result.build(ret > 0);
     }
 

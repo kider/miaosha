@@ -4,6 +4,7 @@
 
     <resultMap id="BaseResultMap" type="com.geekq.api.pojo.Goods">
         <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="goods_id" property="goodsId" jdbcType="BIGINT"/>
         <result column="goods_name" property="goodsName" jdbcType="VARCHAR"/>
         <result column="goods_title" property="goodsTitle" jdbcType="VARCHAR"/>
         <result column="goods_img" property="goodsImg" jdbcType="VARCHAR"/>
@@ -17,7 +18,7 @@
     </resultMap>
 
     <sql id="base_column">
-        miaosha_goods.id as id, goods_name, goods_title, goods_img, goods_detail, goods_price,
+        miaosha_goods.id as id, goods_id,goods_name, goods_title, goods_img, goods_detail, goods_price,
         goods_stock,stock_count,start_date
         ,end_date,miaosha_price
     </sql>

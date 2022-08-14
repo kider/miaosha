@@ -64,7 +64,7 @@ public class MiaoshaController implements InitializingBean {
      * get　post get 幂等　从服务端获取数据　不会产生影响　　post 对服务端产生变化
      */
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
-    @RequestMapping(value = "/{path}/do_miaosha", method = RequestMethod.POST)
+    @RequestMapping(value = "/{path}/miaosha", method = RequestMethod.POST)
     @ResponseBody
     public Result<Integer> miaosha(Model model, User user, @PathVariable("path") String path,
                                    @RequestParam("goodsId") long goodsId) {

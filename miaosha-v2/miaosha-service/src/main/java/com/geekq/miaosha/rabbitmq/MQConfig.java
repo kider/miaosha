@@ -10,11 +10,12 @@ import java.util.Map;
 @Configuration
 public class MQConfig {
 
-    /**
-     * /usr/sbin/rabbitmq-plugins enable rabbitmq_management
-     * mq页面
-     */
+
+    public static final String MIAOSHA_EXCHANGE = "miaosha";
+
     public static final String MIAOSHA_QUEUE = "miaosha.queue";
+
+    public static final String MIAOSHA_ROUTING_KEY = "umiaosha";
 
     public static final String EXCHANGE_TOPIC = "exchange_topic";
 

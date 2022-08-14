@@ -49,7 +49,7 @@ public class RegisterController {
      *
      * @return
      */
-    @RequestMapping("/registerv2")
+    @RequestMapping("/to_register")
     public String register() {
         return "register";
     }

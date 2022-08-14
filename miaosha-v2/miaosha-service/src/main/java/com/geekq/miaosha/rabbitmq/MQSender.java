@@ -20,7 +20,8 @@ public class MQSender {
     public void sendMiaoshaMessage(MiaoshaMessage mm) {
         String msg = RedisService.beanToString(mm);
         log.info("send message:" + msg);
-        amqpTemplate.convertAndSend(MQConfig.MIAOSHA_QUEUE, msg);
+        //amqpTemplate.convertAndSend(MQConfig.MIAOSHA_QUEUE, msg);
+        rabbitTemplate.convertAndSend(MQConfig.MIAOSHA_EXCHANGE, MQConfig.MIAOSHA_ROUTING_KEY, msg);
     }
 
     /**
@@ -29,8 +30,8 @@ public class MQSender {
      * @param mm
      */
     public void sendMessage(MiaoshaMessage mm) {
-        log.info("send message:" + "11111");
-        rabbitTemplate.convertAndSend(MQConfig.EXCHANGE_TOPIC, "miaosha_*", "111111111");
+        String msg = RedisService.beanToString(mm);
+        rabbitTemplate.convertAndSend(MQConfig.EXCHANGE_TOPIC, "miaosha_*", msg);
     }
 
 }

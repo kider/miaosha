@@ -2,6 +2,8 @@ package com.geekq.miaosha.service;
 
 import com.geekq.api.base.AbstractResult;
 import com.geekq.api.base.Result;
+import com.geekq.api.base.enums.ResultStatus;
+import com.geekq.api.base.exception.GlobleException;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
@@ -47,29 +49,39 @@ public class MiaoshaService {
         }
     }
 
-    public void miaosha(User user, Goods goods) {
+    public long miaosha(User user, Goods goods) {
         //减库存 下订单 写入秒杀订单
         Result<Boolean> result = goodsService.reduceStock(goods);
         if (AbstractResult.isSuccess(result)) {
-            Result<Order> orderResult = orderService.createOrder(user, goods);
-            if (!AbstractResult.isSuccess(orderResult)) {
-                log.error("创建订单失败");
-                return;
+            boolean f = result.getData();
+            if (f) {
+                Result<Order> orderResult = orderService.createOrder(user, goods);
+                if (!AbstractResult.isSuccess(orderResult)) {
+                    //TODO 库存?
+                    throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);
+                }
+                return orderResult.getData().getId();
+            } else {
+                //如果没有库存则标记为true
+                setGoodsOver(goods.getId());
             }
         }
-        //如果库存不存在则内存标记为true
-        setGoodsOver(goods.getId());
+        return -1;
     }
 
     public long getMiaoshaResult(Long userId, long goodsId) {
         Result<Order> orderResult = orderService.getMiaoshaOrder(userId, goodsId);
         if (AbstractResult.isSuccess(orderResult)) {
-            return orderResult.getData().getOrderId();
+            Order order = orderResult.getData();
+            if (null != order) {
+                return order.getOrderId();
+            }
         }
         boolean isOver = getGoodsOver(goodsId);
         if (isOver) {
             return -1;
         } else {
+            //前端继续轮询
             return 0;
         }
     }

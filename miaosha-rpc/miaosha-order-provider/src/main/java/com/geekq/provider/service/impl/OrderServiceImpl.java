@@ -1,6 +1,7 @@
 package com.geekq.provider.service.impl;
 
 import com.geekq.api.base.Result;
+import com.geekq.api.base.enums.ResultStatus;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
@@ -44,27 +45,33 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Result<Order> createOrder(User user, Goods goods) {
-        Order orderInfo = new Order();
-        orderInfo.setCreateDate(new Date());
-        orderInfo.setDeliveryAddrId(0L);
-        orderInfo.setGoodsCount(1);
-        orderInfo.setGoodsId(goods.getId());
-        orderInfo.setGoodsName(goods.getGoodsName());
-        orderInfo.setGoodsPrice(goods.getMiaoshaPrice());
-        orderInfo.setOrderChannel(1);
-        orderInfo.setStatus(0);
-        orderInfo.setUserId(Long.valueOf(user.getNickname()));
-        orderMapper.insert(orderInfo);
-        Order order = new Order();
-        order.setGoodsId(goods.getId());
-        order.setOrderId(orderInfo.getId());
-        order.setUserId(Long.valueOf(user.getNickname()));
-        orderMapper.insertMiaoshaOrder(order);
-        //缓存
-        ValueOperations<String, Order> operations = redisTemplate.opsForValue();
-        String orderKey = OrderKey.getMiaoshaOrderByUidGid.getPrefix() + user.getNickname() + "_" + goods.getId();
-        operations.set(orderKey, order);
-        log.info("createOrder key:" + orderKey + ",result:{}", order.getId());
+        Order orderInfo = null;
+        try {
+            orderInfo = new Order();
+            orderInfo.setCreateDate(new Date());
+            orderInfo.setDeliveryAddrId(0L);
+            orderInfo.setGoodsCount(1);
+            orderInfo.setGoodsId(goods.getId());
+            orderInfo.setGoodsName(goods.getGoodsName());
+            orderInfo.setGoodsPrice(goods.getMiaoshaPrice());
+            orderInfo.setOrderChannel(1);
+            orderInfo.setStatus(0);
+            orderInfo.setUserId(Long.valueOf(user.getNickname()));
+            orderMapper.insert(orderInfo);
+            Order order = new Order();
+            order.setGoodsId(goods.getId());
+            order.setOrderId(orderInfo.getId());
+            order.setUserId(Long.valueOf(user.getNickname()));
+            orderMapper.insertMiaoshaOrder(order);
+            //缓存
+            ValueOperations<String, Order> operations = redisTemplate.opsForValue();
+            String orderKey = OrderKey.getMiaoshaOrderByUidGid.getPrefix() + user.getNickname() + "_" + goods.getId();
+            operations.set(orderKey, order);
+            log.info("createOrder key:" + orderKey + ",result:{}", order.getId());
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Result.error(ResultStatus.ORDER_CREATE_FAIL);
+        }
         return Result.build(orderInfo);
     }
 
