@@ -15,6 +15,7 @@ import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miaosha.redis.redismanager.RedisLimitRateWithLUA;
 import com.geekq.miasha.redis.GoodsKey;
 import com.geekq.miasha.redis.MiaoshaKey;
+import com.geekq.miasha.redis.OrderKey;
 import com.geekq.miasha.utils.MD5Utils;
 import com.geekq.miasha.utils.UUIDUtils;
 import com.geekq.miasha.utils.VerifyCodeUtils;
@@ -27,8 +28,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.script.ScriptException;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -88,28 +87,32 @@ public class MiaoshaService implements InitializingBean {
          * 分布式限流
          */
         try {
-            RedisLimitRateWithLUA.accquire();
-        } catch (IOException e) {
-            result.withError(EXCEPTION.getCode(), REPEATE_MIAOSHA.getMessage());
-            return result;
-        } catch (URISyntaxException e) {
-            result.withError(EXCEPTION.getCode(), REPEATE_MIAOSHA.getMessage());
+            boolean acc = RedisLimitRateWithLUA.accquire();
+            if (!acc) {
+                result.withError(REQUEST_ILLEGAL.getCode(), REQUEST_ILLEGAL.getMessage());
+                return result;
+            }
+        } catch (Exception e) {
+            result.withError(REQUEST_ILLEGAL.getCode(), REQUEST_ILLEGAL.getMessage());
             return result;
         }
 
         //是否已经秒杀到
-        Result<Order> orderResult = orderService.getMiaoshaOrder(Long.parseLong(user.getNickname()), goodsId);
-        if (!AbstractResult.isSuccess(orderResult)) {
+        Order order = getMiaoshaOrder(Long.parseLong(user.getNickname()), goodsId);
+        if (null != order) {
             result.withError(EXCEPTION.getCode(), REPEATE_MIAOSHA.getMessage());
             return result;
         }
+        //是否已经没有库存
+        //boolean over = getGoodsOver(goodsId);
         //内存标记，减少redis访问
+        // TODO 本地的怎么维护
         boolean over = localOverMap.get(goodsId);
         if (over) {
             result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
             return result;
         }
-        //预见库存 TODO
+        //预见库存
         Long stock = redisService.decr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
         if (stock < 0) {
             localOverMap.put(goodsId, true);
@@ -136,12 +139,9 @@ public class MiaoshaService implements InitializingBean {
      * @date 2022/8/15 14:32
      **/
     public long getMiaoshaResult(Long userId, long goodsId) {
-        Result<Order> orderResult = orderService.getMiaoshaOrder(userId, goodsId);
-        if (AbstractResult.isSuccess(orderResult)) {
-            Order order = orderResult.getData();
-            if (null != order) {
-                return order.getOrderId();
-            }
+        Order order = getMiaoshaOrder(userId, goodsId);
+        if (null != order) {
+            return order.getOrderId();
         }
         boolean isOver = getGoodsOver(goodsId);
         if (isOver) {
@@ -162,14 +162,14 @@ public class MiaoshaService implements InitializingBean {
      * @date 2022/8/15 14:54
      **/
     public long createMsOrder(User user, Goods goods) {
-        //减库存 下订单 写入秒杀订单
-        //TODO 分布式的情况下应该怎么减库存
+        //减库存
         Result<Boolean> result = goodsService.reduceStock(goods);
         if (AbstractResult.isSuccess(result)) {
             if (result.getData()) {
+                //下订单
                 Result<Order> orderResult = orderService.createOrder(user, goods);
                 if (!AbstractResult.isSuccess(orderResult)) {
-                    //TODO 如果创建订单失败是否需要处理库存
+                    //TODO 如果创建订单失败需要处理库存
                     throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);
                 }
                 return orderResult.getData().getId();
@@ -179,6 +179,21 @@ public class MiaoshaService implements InitializingBean {
             }
         }
         return -1;
+    }
+
+    /**
+     * 是否已经秒杀到
+     *
+     * @param userId
+     * @param goodsId
+     * @return com.geekq.api.pojo.Order
+     * @Author kider
+     * @Description
+     * @Date 2022/8/15 23:27
+     **/
+    public Order getMiaoshaOrder(long userId, long goodsId) {
+        Order order = redisService.get(OrderKey.getMiaoshaOrderByUidGid, userId + "_" + goodsId, Order.class);
+        return order;
     }
 
     /**
@@ -281,11 +296,20 @@ public class MiaoshaService implements InitializingBean {
         return path.equals(pathOld);
     }
 
-
+    /**
+     * 标记库存是否已经没了
+     *
+     * @param goodsId
+     */
     private void setGoodsOver(Long goodsId) {
         redisService.set(MiaoshaKey.isGoodsOver, "" + goodsId, true);
     }
 
+    /**
+     * 判断是否已经没有库存了
+     *
+     * @param goodsId
+     */
     private boolean getGoodsOver(long goodsId) {
         return redisService.exists(MiaoshaKey.isGoodsOver, "" + goodsId);
     }

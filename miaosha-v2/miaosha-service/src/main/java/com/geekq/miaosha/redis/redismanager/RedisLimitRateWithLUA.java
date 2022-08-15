@@ -2,14 +2,12 @@ package com.geekq.miaosha.redis.redismanager;
 
 import redis.clients.jedis.Jedis;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RedisLimitRateWithLUA {
 
-    public static boolean accquire() throws IOException, URISyntaxException {
+    public static boolean accquire() throws Exception {
         Jedis jedis = RedisManager.getJedis();
         String lua =
                 "local key = KEYS[1] " +

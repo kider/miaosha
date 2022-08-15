@@ -8,7 +8,6 @@ import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
 import com.geekq.api.service.GoodsService;
-import com.geekq.api.service.OrderService;
 import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miaosha.service.MiaoshaService;
 import com.rabbitmq.client.Channel;
@@ -32,9 +31,6 @@ public class MQReceiver {
     @DubboReference
     GoodsService goodsService;
 
-    @DubboReference
-    OrderService orderService;
-
     @Autowired
     MiaoshaService miaoshaService;
 
@@ -47,31 +43,29 @@ public class MQReceiver {
             User user = mm.getUser();
             long goodsId = mm.getGoodsId();
             //判断是否已经秒杀到了
-            Result<Order> orderResult = orderService.getMiaoshaOrder(Long.parseLong(user.getNickname()), goodsId);
-            if (AbstractResult.isSuccess(orderResult)) {
-                if (null == orderResult.getData()) {
-                    Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
-                    if (!AbstractResult.isSuccess(goodsResult)) {
-                        throw new GlobleException(ResultStatus.GOODS_GET_FAIL);
-                    }
-                    Goods goods = goodsResult.getData();
-                    int stock = goods.getStockCount();
-                    if (stock <= 0) {
-                        log.error("nickname:" + user.getNickname() + ",goodsId:{},秒杀失败,没有库存了", goodsId);
-                        return;
-                    }
-                    //减库存 下订单 写入秒杀订单
-                    long orderId = miaoshaService.createMsOrder(user, goods);
-                    //手动 ack
-                    channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-                    log.info("秒杀成功,orderId:{}", orderId);
+            Order order = miaoshaService.getMiaoshaOrder(Long.parseLong(user.getNickname()), goodsId);
+            if (null == order) {
+                Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
+                if (!AbstractResult.isSuccess(goodsResult)) {
+                    throw new GlobleException(ResultStatus.GOODS_GET_FAIL);
+                }
+                Goods goods = goodsResult.getData();
+                int stock = goods.getStockCount();
+                if (stock <= 0) {
+                    log.error("nickname:{},goodsId:{},秒杀失败,没有库存了", user.getNickname(), goodsId);
                     return;
                 }
+                //减库存 下订单
+                long orderId = miaoshaService.createMsOrder(user, goods);
+                //手动 ack
+                channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+                log.info("秒杀成功,orderId:{}", orderId);
+                return;
             } else {
                 //直接丢弃
                 try {
                     channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);
-                    log.error("丢弃消息,已经秒杀:{}", orderResult.getStatus().getMessage());
+                    log.error("丢弃消息,已经秒杀成功了,userId:{},goodsId:{}", user.getNickname(), goodsId);
                 } catch (IOException e1) {
                     log.error(e1.getMessage());
                 }

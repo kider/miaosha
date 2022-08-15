@@ -29,15 +29,6 @@ public class OrderServiceImpl implements OrderService {
     private RedisTemplate<String, Order> redisTemplate;
 
     @Override
-    public Result<Order> getMiaoshaOrder(long userId, long goodsId) {
-        ValueOperations<String, Order> operations = redisTemplate.opsForValue();
-        String orderKey = OrderKey.getMiaoshaOrderByUidGid.getPrefix() + userId + "_" + goodsId;
-        Order result = operations.get(orderKey);
-        log.info("getMiaoshaOrder key:" + orderKey + ",result:{}", result);
-        return Result.build(result);
-    }
-
-    @Override
     public Result<Order> getOrderById(long orderId) {
         Order order = orderMapper.getOrderById(orderId);
         return Result.build(order);

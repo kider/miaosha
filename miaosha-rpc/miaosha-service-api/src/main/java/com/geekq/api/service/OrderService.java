@@ -10,8 +10,6 @@ import com.geekq.api.pojo.User;
  */
 public interface OrderService {
 
-    Result<Order> getMiaoshaOrder(long userId, long goodsId);
-
     Result<Order> getOrderById(long orderId);
 
     Result<Order> createOrder(User user, Goods goods);
