@@ -47,7 +47,7 @@ public class OrderController extends BaseController {
         }
         model.addAttribute("goods", goodsResult.getData());
         model.addAttribute("orderInfo", order);
-        return render(request, response, model, "order_detail", OrderKey.getOrderDetail, "" + order.getId());
+        return render(request, response, model, "order_detail", OrderKey.getOrderDetail, "" + orderId);
     }
 
 }
