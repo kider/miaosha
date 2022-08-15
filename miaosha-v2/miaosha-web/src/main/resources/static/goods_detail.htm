@@ -196,7 +196,7 @@ $(function(){
 function getDetail(){
 	var goodsId = g_getQueryString("goodsId");
 	$.ajax({
-		url:"/goods/detail/"+goodsId,
+		url:"/goods/detail2/"+goodsId,
 		type:"GET",
 		success:function(data){
 			if(data.code == 0){

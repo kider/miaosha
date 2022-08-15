@@ -10,9 +10,9 @@ import com.geekq.api.service.GoodsService;
 import com.geekq.miaosha.interceptor.RequireLogin;
 import com.geekq.miasha.redis.GoodsKey;
 import com.geekq.miasha.vo.GoodsDetailVo;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,65 +23,133 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
+@Slf4j
 @Controller
 @RequestMapping("/goods")
 public class GoodsController extends BaseController {
-
-    private static Logger log = LoggerFactory.getLogger(GoodsController.class);
 
     @DubboReference
     private GoodsService goodsService;
 
     /**
-     * QPS:1267 load:15 mysql
-     * 5000 * 10
-     * QPS:2884, load:5
-     */
+     * 秒杀商品列表
+     *
+     * @param request
+     * @param response
+     * @param model
+     * @param user
+     * @author chenh
+     * @date 2022/8/15 10:59
+     **/
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/list", produces = "text/html")
-    public void list(HttpServletRequest request, HttpServletResponse response, Model model, User user) {
-        model.addAttribute("user", user);
+    public String list(HttpServletRequest request, HttpServletResponse response, Model model, User user) {
         Result<List<Goods>> resultGoods = goodsService.list();
         if (!AbstractResult.isSuccess(resultGoods)) {
             throw new GlobleException(ResultStatus.SYSTEM_ERROR);
         }
         List<Goods> goodsList = resultGoods.getData();
         model.addAttribute("goodsList", goodsList);
-        render(request, response, model, "goods_list", GoodsKey.getGoodsList, "");
+        model.addAttribute("user", user);
+        return render(request, response, model, "goods_list", GoodsKey.getGoodsList, "goodsList");
     }
 
     /**
-     * 数据库很少使用long的　，　id 正常使一般使用　snowflake 分布式自增id
+     * 秒杀商品详情（缓存）
      *
+     * @param request
+     * @param response
      * @param model
      * @param user
      * @param goodsId
-     * @return
-     */
-    @RequestMapping(value = "/detail/{goodsId}")
+     * @return {@link String}
+     * @author chenh
+     * @date 2022/8/15 13:38
+     **/
+    @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
+    @RequestMapping(value = "/detail/{goodsId}", produces = "text/html")
+    public String detail2(HttpServletRequest request, HttpServletResponse response, Model model, User user,
+                          @PathVariable("goodsId") long goodsId) {
+        final String redisKey = "goodsDetail";
+        model.addAttribute("user", user);
+        //取缓存
+        String html = redisService.get(GoodsKey.getGoodsDetail, redisKey + goodsId, String.class);
+        if (!StringUtils.isBlank(html)) {
+            return html;
+        }
+        Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
+        if (!AbstractResult.isSuccess(goodsResult)) {
+            throw new GlobleException(ResultStatus.SYSTEM_ERROR);
+        }
+        Goods goods = goodsResult.getData();
+        model.addAttribute("goods", goods);
+
+        long startAt = goods.getStartDate().getTime();
+        long endAt = goods.getEndDate().getTime();
+        long now = System.currentTimeMillis();
+
+        int miaoshaStatus = 0;
+        int remainSeconds = 0;
+        //秒杀还没开始，倒计时
+        if (now < startAt) {
+            miaoshaStatus = 0;
+            remainSeconds = (int) ((startAt - now) / 1000);
+        }
+        //秒杀已经结束
+        else if (now > endAt) {
+            miaoshaStatus = 2;
+            remainSeconds = -1;
+        }
+        //秒杀进行中
+        else {
+            miaoshaStatus = 1;
+            remainSeconds = 0;
+        }
+        model.addAttribute("miaoshaStatus", miaoshaStatus);
+        model.addAttribute("remainSeconds", remainSeconds);
+
+        return render(request, response, model, "goods_detail", GoodsKey.getGoodsDetail, redisKey + goodsId);
+    }
+
+    /**
+     * 秒杀商品详情
+     *
+     * @param request
+     * @param response
+     * @param model
+     * @param user
+     * @param goodsId  商品ID
+     * @return {@link Result< GoodsDetailVo>}
+     * @author chenh
+     * @date 2022/8/15 11:21
+     **/
+    @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
+    @RequestMapping(value = "/detail2/{goodsId}")
     @ResponseBody
     public Result<GoodsDetailVo> detail(HttpServletRequest request, HttpServletResponse response, Model model, User user,
                                         @PathVariable("goodsId") long goodsId) {
         Result<GoodsDetailVo> result = Result.build();
-
-        Result<Goods> goodsVoOrderResultOrder = goodsService.getMsGoodsByGoodsId(goodsId);
-        if (!AbstractResult.isSuccess(goodsVoOrderResultOrder)) {
-            throw new GlobleException(ResultStatus.SESSION_ERROR);
+        Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
+        if (!AbstractResult.isSuccess(goodsResult)) {
+            throw new GlobleException(ResultStatus.SYSTEM_ERROR);
         }
-
-        Goods goods = goodsVoOrderResultOrder.getData();
+        Goods goods = goodsResult.getData();
         long startAt = goods.getStartDate().getTime();
         long endAt = goods.getEndDate().getTime();
         long now = System.currentTimeMillis();
         int miaoshaStatus = 0;
         int remainSeconds = 0;
-        if (now < startAt) {//秒杀还没开始，倒计时
+        //秒杀还没开始，倒计时
+        if (now < startAt) {
             miaoshaStatus = 0;
             remainSeconds = (int) ((startAt - now) / 1000);
-        } else if (now > endAt) {//秒杀已经结束
+        }
+        //秒杀已经结束
+        else if (now > endAt) {
             miaoshaStatus = 2;
             remainSeconds = -1;
-        } else {//秒杀进行中
+        } else {
+            //秒杀进行中
             miaoshaStatus = 1;
             remainSeconds = 0;
         }
@@ -93,5 +161,6 @@ public class GoodsController extends BaseController {
         result.setData(vo);
         return result;
     }
+
 
 }

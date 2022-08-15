@@ -6,29 +6,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public class RedisLimitRateWithLUA {
-
-    public static void main(String[] args) {
-        final CountDownLatch latch = new CountDownLatch(1);
-
-        for (int i = 0; i < 20; i++) {
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        latch.await();
-                        System.out.println("请求是否被执行：" + accquire());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
-
-        }
-
-        latch.countDown();
-    }
 
     public static boolean accquire() throws IOException, URISyntaxException {
         Jedis jedis = RedisManager.getJedis();
@@ -49,7 +28,6 @@ public class RedisLimitRateWithLUA {
         keys.add(key);
         List<String> args = new ArrayList<String>();
         args.add(limit);
-        jedis.auth("aptx4869");
         String luaScript = jedis.scriptLoad(lua);
         Long result = (Long) jedis.evalsha(luaScript, keys, args);
         return result == 1;

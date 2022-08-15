@@ -1,6 +1,6 @@
 package com.geekq.miasha.validator;
 
-import com.geekq.miasha.utils.ValidatorUtil;
+import com.geekq.miasha.utils.ValidatorUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.ConstraintValidator;
@@ -18,12 +18,12 @@ public class MobileValidator implements ConstraintValidator<MobileCheck, String>
     @Override
     public boolean isValid(String value, ConstraintValidatorContext constraintValidatorContext) {
         if (require) {
-            return ValidatorUtil.isMobile(value);
+            return ValidatorUtils.isMobile(value);
         } else {
             if (StringUtils.isEmpty(value)) {
                 return true;
             } else {
-                return ValidatorUtil.isMobile(value);
+                return ValidatorUtils.isMobile(value);
             }
         }
     }

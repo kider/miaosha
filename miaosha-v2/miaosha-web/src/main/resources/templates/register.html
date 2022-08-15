@@ -92,7 +92,7 @@
         });
 
         function refreshVerifyCode() {
-            $("#verifyCodeImg").attr("src", "/miaosha/verifyCodeRegister?timestamp=" + new Date().getTime());
+            $("#verifyCodeImg").attr("src", "/verifyCodeRegister?timestamp=" + new Date().getTime());
         }
 
     </script>
@@ -123,7 +123,7 @@
                         </div>
                         <div class="ececk_warning"><span>密码不能为空</span></div>
                         <div class="form_text_ipt">
-                            <img id="verifyCodeImg" width="80" height="32" src="/miaosha/verifyCodeRegister"
+                            <img id="verifyCodeImg" width="80" height="32" src="/verifyCodeRegister"
                                  type="text"
                                  onclick="refreshVerifyCode()"/>
                         </div>

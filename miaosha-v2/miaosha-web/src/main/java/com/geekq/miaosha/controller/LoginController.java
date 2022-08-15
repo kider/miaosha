@@ -5,7 +5,7 @@ import com.geekq.api.base.Result;
 import com.geekq.api.base.enums.ResultStatus;
 import com.geekq.api.service.UserService;
 import com.geekq.miaosha.utils.CookieUtils;
-import com.geekq.miasha.utils.UUIDUtil;
+import com.geekq.miasha.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Controller;
@@ -26,7 +26,7 @@ public class LoginController {
     @RequestMapping("/loginin")
     @ResponseBody
     public Result<String> dologin(HttpServletResponse response, @RequestParam String nickname, @RequestParam String password) {
-        String token = UUIDUtil.uuid();
+        String token = UUIDUtils.uuid();
         Result<Boolean> result = userService.login(nickname, password, token);
         if (AbstractResult.isSuccess(result)) {
             Boolean flag = result.getData();

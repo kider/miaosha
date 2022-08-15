@@ -46,22 +46,22 @@ public class MQReceiver {
             MiaoshaMessage mm = RedisService.stringToBean(msg, MiaoshaMessage.class);
             User user = mm.getUser();
             long goodsId = mm.getGoodsId();
-
-            Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
-            if (!AbstractResult.isSuccess(goodsResult)) {
-                throw new GlobleException(ResultStatus.SESSION_ERROR);
-            }
-            Goods goods = goodsResult.getData();
-            int stock = goods.getStockCount();
-            if (stock <= 0) {
-                return;
-            }
             //判断是否已经秒杀到了
-            Result<Order> orderResult = orderService.getMiaoshaOrder(Long.valueOf(user.getNickname()), goodsId);
+            Result<Order> orderResult = orderService.getMiaoshaOrder(Long.parseLong(user.getNickname()), goodsId);
             if (AbstractResult.isSuccess(orderResult)) {
                 if (null == orderResult.getData()) {
+                    Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
+                    if (!AbstractResult.isSuccess(goodsResult)) {
+                        throw new GlobleException(ResultStatus.GOODS_GET_FAIL);
+                    }
+                    Goods goods = goodsResult.getData();
+                    int stock = goods.getStockCount();
+                    if (stock <= 0) {
+                        log.error("nickname:" + user.getNickname() + ",goodsId:{},秒杀失败,没有库存了", goodsId);
+                        return;
+                    }
                     //减库存 下订单 写入秒杀订单
-                    long orderId = miaoshaService.miaosha(user, goods);
+                    long orderId = miaoshaService.createMsOrder(user, goods);
                     //手动 ack
                     channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
                     log.info("秒杀成功,orderId:{}", orderId);
@@ -77,6 +77,7 @@ public class MQReceiver {
                 }
             }
         } catch (Exception e) {
+            log.error(e.getMessage());
             //TODO
             //可以设置最大重试次数 再次放到队列里
             //如果超过最大次数还是失败 可放到单独的“死信队列”里处理

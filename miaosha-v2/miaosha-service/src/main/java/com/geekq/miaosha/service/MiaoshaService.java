@@ -9,26 +9,34 @@ import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
 import com.geekq.api.service.GoodsService;
 import com.geekq.api.service.OrderService;
+import com.geekq.miaosha.rabbitmq.MQSender;
+import com.geekq.miaosha.rabbitmq.MiaoshaMessage;
 import com.geekq.miaosha.redis.RedisService;
+import com.geekq.miaosha.redis.redismanager.RedisLimitRateWithLUA;
+import com.geekq.miasha.redis.GoodsKey;
 import com.geekq.miasha.redis.MiaoshaKey;
 import com.geekq.miasha.utils.MD5Utils;
-import com.geekq.miasha.utils.UUIDUtil;
+import com.geekq.miasha.utils.UUIDUtils;
+import com.geekq.miasha.utils.VerifyCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import java.awt.*;
+import javax.script.ScriptException;
 import java.awt.image.BufferedImage;
-import java.util.Random;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.List;
+
+import static com.geekq.api.base.enums.ResultStatus.*;
 
 @Slf4j
 @Service
-public class MiaoshaService {
-
-    private static char[] ops = new char[]{'+', '-', '*'};
+public class MiaoshaService implements InitializingBean {
 
     @DubboReference
     GoodsService goodsService;
@@ -36,39 +44,97 @@ public class MiaoshaService {
     OrderService orderService;
     @Autowired
     RedisService redisService;
+    @Autowired
+    MQSender mqSender;
 
-    private static int calc(String exp) {
+    private HashMap<Long, Boolean> localOverMap = new HashMap<Long, Boolean>();
+
+    /**
+     * 立即秒杀
+     * 订单通过mq服务生成
+     *
+     * @param user
+     * @param goodsId
+     * @param path
+     * @return {@link Result< Integer>}
+     * @author chenh
+     * @date 2022/8/15 14:16
+     **/
+    public Result<Integer> miaosha(User user, Long goodsId, String path) {
+
+        Result<Integer> result = Result.build();
+        if (user == null) {
+            result.withError(SESSION_ERROR.getCode(), SESSION_ERROR.getMessage());
+            return result;
+        }
+
+        //验证path
+        boolean check = checkPath(user, goodsId, path);
+        if (!check) {
+            result.withError(REQUEST_ILLEGAL.getCode(), REQUEST_ILLEGAL.getMessage());
+            return result;
+        }
+
+        //使用RateLimiter 限流
+        /*
+        RateLimiter rateLimiter = RateLimiter.create(10);
+        //判断能否在1秒内得到令牌，如果不能则立即返回false，不会阻塞程序
+        if (!rateLimiter.tryAcquire(1000, TimeUnit.MILLISECONDS)) {
+            System.out.println("短期无法获取令牌，真不幸，排队也瞎排");
+            return ResultGeekQ.error(MIAOSHA_FAIL);
+        }*/
+
+        /**
+         * 分布式限流
+         */
         try {
-            ScriptEngineManager manager = new ScriptEngineManager();
-            ScriptEngine engine = manager.getEngineByName("JavaScript");
-            Integer catch1 = (Integer) engine.eval(exp);
-            return catch1.intValue();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return 0;
+            RedisLimitRateWithLUA.accquire();
+        } catch (IOException e) {
+            result.withError(EXCEPTION.getCode(), REPEATE_MIAOSHA.getMessage());
+            return result;
+        } catch (URISyntaxException e) {
+            result.withError(EXCEPTION.getCode(), REPEATE_MIAOSHA.getMessage());
+            return result;
         }
+
+        //是否已经秒杀到
+        Result<Order> orderResult = orderService.getMiaoshaOrder(Long.parseLong(user.getNickname()), goodsId);
+        if (!AbstractResult.isSuccess(orderResult)) {
+            result.withError(EXCEPTION.getCode(), REPEATE_MIAOSHA.getMessage());
+            return result;
+        }
+        //内存标记，减少redis访问
+        boolean over = localOverMap.get(goodsId);
+        if (over) {
+            result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
+            return result;
+        }
+        //预见库存 TODO
+        Long stock = redisService.decr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
+        if (stock < 0) {
+            localOverMap.put(goodsId, true);
+            result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
+            return result;
+        }
+        MiaoshaMessage mm = new MiaoshaMessage();
+        mm.setGoodsId(goodsId);
+        mm.setUser(user);
+        mqSender.sendMiaoshaMessage(mm);
+        return result;
     }
 
-    public long miaosha(User user, Goods goods) {
-        //减库存 下订单 写入秒杀订单
-        Result<Boolean> result = goodsService.reduceStock(goods);
-        if (AbstractResult.isSuccess(result)) {
-            boolean f = result.getData();
-            if (f) {
-                Result<Order> orderResult = orderService.createOrder(user, goods);
-                if (!AbstractResult.isSuccess(orderResult)) {
-                    //TODO 库存?
-                    throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);
-                }
-                return orderResult.getData().getId();
-            } else {
-                //如果没有库存则标记为true
-                setGoodsOver(goods.getId());
-            }
-        }
-        return -1;
-    }
-
+    /**
+     * 获取秒杀结果
+     * orderId：成功
+     * -1：秒杀失败
+     * 0： 排队中
+     *
+     * @param userId  用户ID
+     * @param goodsId 秒杀商品ID
+     * @return {@link long}
+     * @author chenh
+     * @date 2022/8/15 14:32
+     **/
     public long getMiaoshaResult(Long userId, long goodsId) {
         Result<Order> orderResult = orderService.getMiaoshaOrder(userId, goodsId);
         if (AbstractResult.isSuccess(orderResult)) {
@@ -86,15 +152,128 @@ public class MiaoshaService {
         }
     }
 
-    private void setGoodsOver(Long goodsId) {
-        redisService.set(MiaoshaKey.isGoodsOver, "" + goodsId, true);
+    /**
+     * 减库存，创建订单
+     *
+     * @param user
+     * @param goods
+     * @return {@link long}
+     * @author chenh
+     * @date 2022/8/15 14:54
+     **/
+    public long createMsOrder(User user, Goods goods) {
+        //减库存 下订单 写入秒杀订单
+        //TODO 分布式的情况下应该怎么减库存
+        Result<Boolean> result = goodsService.reduceStock(goods);
+        if (AbstractResult.isSuccess(result)) {
+            if (result.getData()) {
+                Result<Order> orderResult = orderService.createOrder(user, goods);
+                if (!AbstractResult.isSuccess(orderResult)) {
+                    //TODO 如果创建订单失败是否需要处理库存
+                    throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);
+                }
+                return orderResult.getData().getId();
+            } else {
+                //如果没有库存则标记为true
+                setGoodsOver(goods.getId());
+            }
+        }
+        return -1;
     }
 
-    private boolean getGoodsOver(long goodsId) {
-        return redisService.exists(MiaoshaKey.isGoodsOver, "" + goodsId);
+    /**
+     * 初始化库存信息
+     *
+     * @author chenh
+     * @date 2022/8/15 14:58
+     **/
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        Result<List<Goods>> result = goodsService.list();
+        if (!CollectionUtils.isEmpty(result.getData())) {
+            for (Goods goods : result.getData()) {
+                redisService.set(GoodsKey.getMiaoshaGoodsStock, "" + goods.getId(), goods.getStockCount());
+                localOverMap.put(goods.getId(), false);
+            }
+        }
     }
 
-    public boolean checkPath(User user, long goodsId, String path) {
+
+    /**
+     * 获取秒杀验证码
+     *
+     * @param user
+     * @param goodsId
+     * @return {@link BufferedImage}
+     * @author chenh
+     * @date 2022/8/15 15:41
+     **/
+    public BufferedImage createVerifyCode(User user, long goodsId) throws ScriptException {
+        if (user == null || goodsId <= 0) {
+            return null;
+        }
+        int width = 80;
+        int height = 32;
+        String verifyCode = VerifyCodeUtils.generateVerifyCode();
+        BufferedImage image = VerifyCodeUtils.createVerifyCodeImg(verifyCode, width, height);
+        int rnd = VerifyCodeUtils.calc(verifyCode);
+        //把验证码存到redis中
+        redisService.set(MiaoshaKey.getMiaoshaVerifyCode, user.getNickname() + "_" + goodsId, rnd);
+        //输出图片
+        return image;
+    }
+
+    /**
+     * 较验秒杀验证码
+     *
+     * @param user
+     * @param goodsId
+     * @param verifyCode
+     * @return {@link boolean}
+     * @author chenh
+     * @date 2022/8/15 16:49
+     **/
+    public boolean checkVerifyCode(User user, long goodsId, int verifyCode) {
+        if (user == null || goodsId <= 0) {
+            return false;
+        }
+        Integer codeOld = redisService.get(MiaoshaKey.getMiaoshaVerifyCode, user.getNickname() + "_" + goodsId, Integer.class);
+        if (codeOld == null || codeOld - verifyCode != 0) {
+            return false;
+        }
+        redisService.delete(MiaoshaKey.getMiaoshaVerifyCode, user.getNickname() + "_" + goodsId);
+        return true;
+    }
+
+    /**
+     * 创建秒杀path
+     *
+     * @param user
+     * @param goodsId
+     * @return {@link String}
+     * @author chenh
+     * @date 2022/8/15 16:50
+     **/
+    public String createMiaoshaPath(User user, long goodsId) {
+        if (user == null || goodsId <= 0) {
+            return null;
+        }
+        String str = MD5Utils.md5(UUIDUtils.uuid());
+        redisService.set(MiaoshaKey.getMiaoshaPath, "" + user.getNickname() + "_" + goodsId, str);
+        return str;
+    }
+
+    /**
+     * 验证秒杀path
+     *
+     * @param user
+     * @param goodsId
+     * @param path
+     * @return {@link boolean}
+     * @author chenh
+     * @date 2022/8/15 16:49
+     **/
+    private boolean checkPath(User user, long goodsId, String path) {
         if (user == null || path == null) {
             return false;
         }
@@ -102,122 +281,13 @@ public class MiaoshaService {
         return path.equals(pathOld);
     }
 
-    public String createMiaoshaPath(User user, long goodsId) {
-        if (user == null || goodsId <= 0) {
-            return null;
-        }
-        String str = MD5Utils.md5(UUIDUtil.uuid() + "123456");
-        redisService.set(MiaoshaKey.getMiaoshaPath, "" + user.getNickname() + "_" + goodsId, str);
-        return str;
+
+    private void setGoodsOver(Long goodsId) {
+        redisService.set(MiaoshaKey.isGoodsOver, "" + goodsId, true);
     }
 
-    public BufferedImage createVerifyCode(User user, long goodsId) {
-        if (user == null || goodsId <= 0) {
-            return null;
-        }
-        int width = 80;
-        int height = 32;
-        //create the image
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics g = image.getGraphics();
-        // set the background color
-        g.setColor(new Color(0xDCDCDC));
-        g.fillRect(0, 0, width, height);
-        // draw the border
-        g.setColor(Color.black);
-        g.drawRect(0, 0, width - 1, height - 1);
-        // create a random instance to generate the codes
-        Random rdm = new Random();
-        // make some confusion
-        for (int i = 0; i < 50; i++) {
-            int x = rdm.nextInt(width);
-            int y = rdm.nextInt(height);
-            g.drawOval(x, y, 0, 0);
-        }
-        // generate a random code
-        String verifyCode = generateVerifyCode(rdm);
-        g.setColor(new Color(0, 100, 0));
-        g.setFont(new Font("Candara", Font.BOLD, 24));
-        g.drawString(verifyCode, 8, 24);
-        g.dispose();
-        //把验证码存到redis中
-        int rnd = calc(verifyCode);
-        redisService.set(MiaoshaKey.getMiaoshaVerifyCode, user.getNickname() + "," + goodsId, rnd);
-        //输出图片
-        return image;
-    }
-
-    /**
-     * 注册时用的验证码
-     *
-     * @param verifyCode
-     * @return
-     */
-    public boolean checkVerifyCodeRegister(int verifyCode) {
-        Integer codeOld = redisService.get(MiaoshaKey.getMiaoshaVerifyCodeRegister, "regitser", Integer.class);
-        if (codeOld == null || codeOld - verifyCode != 0) {
-            return false;
-        }
-        redisService.delete(MiaoshaKey.getMiaoshaVerifyCode, "regitser");
-        return true;
-    }
-
-    public BufferedImage createVerifyCodeRegister() {
-        int width = 80;
-        int height = 32;
-        //create the image
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics g = image.getGraphics();
-        // set the background color
-        g.setColor(new Color(0xDCDCDC));
-        g.fillRect(0, 0, width, height);
-        // draw the border
-        g.setColor(Color.black);
-        g.drawRect(0, 0, width - 1, height - 1);
-        // create a random instance to generate the codes
-        Random rdm = new Random();
-        // make some confusion
-        for (int i = 0; i < 50; i++) {
-            int x = rdm.nextInt(width);
-            int y = rdm.nextInt(height);
-            g.drawOval(x, y, 0, 0);
-        }
-        // generate a random code
-        String verifyCode = generateVerifyCode(rdm);
-        g.setColor(new Color(0, 100, 0));
-        g.setFont(new Font("Candara", Font.BOLD, 24));
-        g.drawString(verifyCode, 8, 24);
-        g.dispose();
-        //把验证码存到redis中
-        int rnd = calc(verifyCode);
-        redisService.set(MiaoshaKey.getMiaoshaVerifyCodeRegister, "regitser", rnd);
-        //输出图片
-        return image;
-    }
-
-    public boolean checkVerifyCode(User user, long goodsId, int verifyCode) {
-        if (user == null || goodsId <= 0) {
-            return false;
-        }
-        Integer codeOld = redisService.get(MiaoshaKey.getMiaoshaVerifyCode, user.getNickname() + "," + goodsId, Integer.class);
-        if (codeOld == null || codeOld - verifyCode != 0) {
-            return false;
-        }
-        redisService.delete(MiaoshaKey.getMiaoshaVerifyCode, user.getNickname() + "," + goodsId);
-        return true;
-    }
-
-    /**
-     * + - *
-     */
-    private String generateVerifyCode(Random rdm) {
-        int num1 = rdm.nextInt(10);
-        int num2 = rdm.nextInt(10);
-        int num3 = rdm.nextInt(10);
-        char op1 = ops[rdm.nextInt(3)];
-        char op2 = ops[rdm.nextInt(3)];
-        String exp = "" + num1 + op1 + num2 + op2 + num3;
-        return exp;
+    private boolean getGoodsOver(long goodsId) {
+        return redisService.exists(MiaoshaKey.isGoodsOver, "" + goodsId);
     }
 
 }

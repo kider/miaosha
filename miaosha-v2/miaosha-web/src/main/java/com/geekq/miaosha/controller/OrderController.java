@@ -2,35 +2,28 @@ package com.geekq.miaosha.controller;
 
 import com.geekq.api.base.AbstractResult;
 import com.geekq.api.base.Result;
+import com.geekq.api.base.enums.ResultStatus;
+import com.geekq.api.base.exception.GlobleException;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
 import com.geekq.api.service.GoodsService;
 import com.geekq.api.service.OrderService;
-import com.geekq.api.service.UserService;
-import com.geekq.miaosha.redis.RedisService;
-import com.geekq.miasha.vo.OrderDetailVo;
+import com.geekq.miaosha.interceptor.RequireLogin;
+import com.geekq.miasha.redis.OrderKey;
 import org.apache.dubbo.config.annotation.DubboReference;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
-import static com.geekq.api.base.enums.ResultStatus.ORDER_NOT_EXIST;
-import static com.geekq.api.base.enums.ResultStatus.SESSION_ERROR;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 
 @Controller
 @RequestMapping("/order")
-public class OrderController {
-
-    @DubboReference
-    UserService userService;
-
-    @Autowired
-    RedisService redisService;
+public class OrderController extends BaseController {
 
     @DubboReference
     OrderService orderService;
@@ -38,30 +31,23 @@ public class OrderController {
     @DubboReference
     GoodsService goodsService;
 
-    @RequestMapping("/detail")
-    @ResponseBody
-    public Result<OrderDetailVo> info(Model model, User user,
-                                      @RequestParam("orderId") long orderId) {
-        Result<OrderDetailVo> result = Result.build();
-        if (user == null) {
-            result.withError(SESSION_ERROR.getCode(), SESSION_ERROR.getMessage());
-            return result;
-        }
+    @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
+    @RequestMapping(value = "/detail/{orderId}", produces = "text/html")
+    public String info(HttpServletRequest request, HttpServletResponse response, Model model, User user,
+                       @PathVariable("orderId") long orderId) {
         Result<Order> orderResult = orderService.getOrderById(orderId);
         if (!AbstractResult.isSuccess(orderResult)) {
-            result.withError(ORDER_NOT_EXIST.getCode(), ORDER_NOT_EXIST.getMessage());
-            return result;
+            throw new GlobleException(ResultStatus.ORDER_NOT_EXIST);
         }
         Order order = orderResult.getData();
-        OrderDetailVo vo = new OrderDetailVo();
-        vo.setOrder(order);
         long goodsId = order.getGoodsId();
         Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
-        if (AbstractResult.isSuccess(goodsResult)) {
-            vo.setGoods(goodsResult.getData());
+        if (!AbstractResult.isSuccess(goodsResult)) {
+            throw new GlobleException(ResultStatus.GOODS_GET_FAIL);
         }
-        result.setData(vo);
-        return result;
+        model.addAttribute("goods", goodsResult.getData());
+        model.addAttribute("orderInfo", order);
+        return render(request, response, model, "order_detail", OrderKey.getOrderDetail, "" + order.getId());
     }
 
 }

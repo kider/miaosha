@@ -4,32 +4,39 @@ import com.geekq.api.base.AbstractResult;
 import com.geekq.api.base.Result;
 import com.geekq.api.service.UserService;
 import com.geekq.miaosha.redis.redismanager.RedisLua;
+import com.geekq.miaosha.service.RegisterService;
 import com.geekq.miaosha.utils.CookieUtils;
-import com.geekq.miasha.utils.UUIDUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.geekq.miasha.utils.UUIDUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.awt.image.BufferedImage;
+import java.io.OutputStream;
 
+import static com.geekq.api.base.enums.ResultStatus.MIAOSHA_FAIL;
 import static com.geekq.api.base.enums.ResultStatus.RESIGETER_FAIL;
 import static com.geekq.miasha.enums.Constanst.COUNTLOGIN;
 
 
+@Slf4j
 @Controller
 @RequestMapping("/")
 public class RegisterController {
 
-    private static Logger logger = LoggerFactory.getLogger(RegisterController.class);
-
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RegisterService registerService;
 
 
     /**
@@ -39,15 +46,13 @@ public class RegisterController {
     public String loginIndex(Model model) {
         RedisLua.vistorCount(COUNTLOGIN);
         String count = RedisLua.getVistorCount(COUNTLOGIN).toString();
-        logger.info("访问网站的次数为:{}", count);
+        log.info("访问网站的次数为:{}", count);
         model.addAttribute("count", count);
         return "login";
     }
 
     /**
      * 注册页面
-     *
-     * @return
      */
     @RequestMapping("/to_register")
     public String register() {
@@ -56,9 +61,7 @@ public class RegisterController {
 
 
     /**
-     * 校验程序
-     *
-     * @return
+     * 校验用户
      */
     @RequestMapping("/checkUsername")
     @ResponseBody
@@ -67,11 +70,10 @@ public class RegisterController {
     }
 
     /**
-     * 注册网站
+     * 注册用户
      *
      * @param userName
      * @param passWord
-     * @return
      */
     @RequestMapping("/register")
     @ResponseBody
@@ -79,7 +81,7 @@ public class RegisterController {
                                     @RequestParam("password") String passWord,
                                     HttpServletResponse response,
                                     HttpServletRequest request) {
-        String token = UUIDUtil.uuid();
+        String token = UUIDUtils.uuid();
         Boolean isR = false;
         Result<Boolean> result = userService.register(userName, passWord, token);
         if (AbstractResult.isSuccess(result)) {
@@ -94,5 +96,24 @@ public class RegisterController {
         CookieUtils.addUserCookie(response, token);
         result.setData(true);
         return result;
+    }
+
+    @RequestMapping(value = "/verifyCodeRegister", method = RequestMethod.GET)
+    @ResponseBody
+    public Result<String> getRegisterVerifyCode(HttpServletResponse response
+    ) {
+        Result<String> result = Result.build();
+        try {
+            BufferedImage image = registerService.createVerifyCodeRegister();
+            OutputStream out = response.getOutputStream();
+            ImageIO.write(image, "JPEG", out);
+            out.flush();
+            out.close();
+            return result;
+        } catch (Exception e) {
+            log.error("注册用户生成验证码错误:{}", e);
+            result.withError(MIAOSHA_FAIL.getCode(), MIAOSHA_FAIL.getMessage());
+            return result;
+        }
     }
 }
