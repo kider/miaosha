@@ -57,6 +57,10 @@ public class MQReceiver {
                 }
                 //减库存 下订单
                 long orderId = miaoshaService.createMsOrder(user, goods);
+                //TODO
+                if(-1 == orderId){
+
+                }
                 //手动 ack
                 channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
                 log.info("秒杀成功,orderId:{}", orderId);

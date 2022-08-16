@@ -13,6 +13,8 @@ import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -34,6 +36,7 @@ public class OrderServiceImpl implements OrderService {
         return Result.build(order);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     @Override
     public Result<Order> createOrder(User user, Goods goods) {
         Order orderInfo = null;

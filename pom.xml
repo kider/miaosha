@@ -37,6 +37,7 @@
         <druid.version>1.2.8</druid.version>
         <dubbo.version>2.6.9</dubbo.version>
         <netty.version>4.1.68.Final</netty.version>
+        <druid.version>1.1.10</druid.version>
     </properties>
     <name>miaosha-parent</name>
     <modules>
@@ -77,6 +78,12 @@
                 <groupId>org.apache.dubbo</groupId>
                 <artifactId>dubbo-spring-boot-starter</artifactId>
                 <version>${dubbo.starter.version}</version>
+            </dependency>
+            <!-- druid -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>${druid.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.reflections</groupId>

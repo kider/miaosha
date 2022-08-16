@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
-import static com.geekq.miasha.enums.Constants.USERTYPE_NORMAL;
+import static com.geekq.miasha.constants.Constants.USERTYPE_NORMAL;
 
 @Slf4j
 @Service("userService")

@@ -3,14 +3,11 @@ package com.geekq.admin.redis;
 import com.alibaba.fastjson.JSON;
 import com.geekq.admin.utils.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 @Slf4j
-public class RedisClient implements ApplicationContextAware {
+public class RedisClient {
     /**
      * 池化管理jedis链接池
      */
@@ -123,12 +120,5 @@ public class RedisClient implements ApplicationContextAware {
             jedisPool.returnResource(jedis);
         }
         return null;
-    }
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        if (applicationContext == null) {
-            applicationContext = applicationContext;
-        }
     }
 }

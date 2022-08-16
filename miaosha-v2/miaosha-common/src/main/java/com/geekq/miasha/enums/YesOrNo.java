@@ -1,8 +1,6 @@
 package com.geekq.miasha.enums;
 
-/**
- * @Description: 是否枚举
- */
+
 public enum YesOrNo {
 
     YES(1),            // 是	有错误

@@ -1,8 +1,6 @@
 package com.geekq.miasha.enums;
 
-/**
- * @Description: 男女枚举
- */
+
 public enum SexEnum {
 
     GIRL(0),        // 女

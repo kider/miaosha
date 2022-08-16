@@ -24,7 +24,7 @@ import java.io.OutputStream;
 
 import static com.geekq.api.base.enums.ResultStatus.MIAOSHA_FAIL;
 import static com.geekq.api.base.enums.ResultStatus.RESIGETER_FAIL;
-import static com.geekq.miasha.enums.Constanst.COUNTLOGIN;
+import static com.geekq.miasha.constants.Constants.COUNTLOGIN;
 
 
 @Slf4j
