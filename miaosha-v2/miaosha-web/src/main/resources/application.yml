@@ -1,0 +1,62 @@
+dubbo:
+  application:
+    name: miaosha-web
+  consumer:
+    timeout: 5000
+  protocol:
+    name: dubbo
+    port: 20883
+  registry:
+    address: zookeeper://www.coolboy.fun:xxxx
+#是否开启页面缓存
+pageCache:
+  enbale: true
+redis:
+  host: www.coolboy.fun
+  password: xxxx
+  poolMaxIdle: 500
+  poolMaxTotal: 1000
+  poolMaxWait: 500
+  port: 1234
+  timeout: 10
+server:
+  port: 9091
+spring:
+  rabbitmq:
+    host: www.coolboy.fun
+    listener:
+      direct:
+        acknowledge-mode: manual
+      simple:
+        acknowledge-mode: manual
+        auto-startup: true
+        concurrency: 10
+        default-requeue-rejected: true
+        max-concurrency: 10
+        prefetch: 5
+    password: xxxx
+    port: 1234
+    publisher-confirm-type: correlated
+    template:
+      retry:
+        enabled: true
+        max-attempts: 3
+        multiplier: 1.0
+    username: admin
+    virtual-host: /
+  thymeleaf:
+    cache: false
+    enabled: true
+    encoding: UTF-8
+    mode: HTML5
+    prefix: classpath:/templates/
+    servlet:
+      content-type: text/html
+    suffix: .html
+  web:
+    resources:
+      add-mappings: true
+      chain:
+        cache: true
+        enabled: true
+      static-locations: classpath:/static/
