@@ -60,3 +60,41 @@ spring:
         cache: true
         enabled: true
       static-locations: classpath:/static/
+      # 分布式事务
+seata:
+  application-id: miaosha-web
+  enable-auto-data-source-proxy: true
+  data-source-proxy-mode: AT
+  tx-service-group: miaosha_tx_group
+  service:
+    vgroup-mapping:
+      miaosha_tx_group: seata-server
+    seata-server:
+      grouplist: www.coolboy.fun:xxxx
+    enableDegrade: false
+  config:
+    type: zk
+    zk:
+      server-addr: www.coolboy.fun:xxxx
+  transport:
+    type: tcp
+    #NIO NATIVE
+    server: nio
+    #enable heartbeat
+    heartbeat: true
+    #thread factory for netty
+    thread-factory:
+      boss-thread-prefix: NettyBoss
+      worker-thread-prefix: NettyServerNIOWorker
+      share-boss-worker: false
+      client-selector-thread-prefix: NettyClientSelector
+      client-selector-thread-size: 1
+      client-worker-thread-prefix: NettyClientWorkerThread
+      # netty boss thread size,will not be used for UDT
+      boss-thread-size: 1
+      #auto default pin or 8
+      worker-thread-size: pin
+  registry:
+    type: zk
+    zk:
+      server-addr: www.coolboy.fun:xxxx
