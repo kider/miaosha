@@ -19,6 +19,8 @@ import com.geekq.miasha.redis.OrderKey;
 import com.geekq.miasha.utils.MD5Utils;
 import com.geekq.miasha.utils.UUIDUtils;
 import com.geekq.miasha.utils.VerifyCodeUtils;
+import io.seata.core.context.RootContext;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.InitializingBean;
@@ -74,7 +76,7 @@ public class MiaoshaService implements InitializingBean {
             return result;
         }
 
-        //使用RateLimiter 限流
+        //使用RateLimiter 单机应用限流
         /*
         RateLimiter rateLimiter = RateLimiter.create(10);
         //判断能否在1秒内得到令牌，如果不能则立即返回false，不会阻塞程序
@@ -83,9 +85,6 @@ public class MiaoshaService implements InitializingBean {
             return ResultGeekQ.error(MIAOSHA_FAIL);
         }*/
 
-        /**
-         * 分布式限流
-         */
         try {
             boolean acc = RedisLimitRateWithLUA.accquire();
             if (!acc) {
@@ -161,7 +160,9 @@ public class MiaoshaService implements InitializingBean {
      * @author chenh
      * @date 2022/8/15 14:54
      **/
+    @GlobalTransactional(timeoutMills = 300000)
     public long createMsOrder(User user, Goods goods) {
+        System.out.println("开始全局事务，XID = " + RootContext.getXID());
         //减库存
         Result<Boolean> result = goodsService.reduceStock(goods);
         if (AbstractResult.isSuccess(result)) {
