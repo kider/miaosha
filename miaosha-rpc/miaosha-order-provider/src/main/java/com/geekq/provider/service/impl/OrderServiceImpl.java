@@ -36,8 +36,8 @@ public class OrderServiceImpl implements OrderService {
         return Result.build(order);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED)
     @Override
+    @Transactional(propagation = Propagation.REQUIRED)
     public Result<Order> createOrder(User user, Goods goods) {
         Order orderInfo = null;
         try {
