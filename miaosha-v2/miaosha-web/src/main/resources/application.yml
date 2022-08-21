@@ -69,9 +69,8 @@ seata:
   service:
     vgroup-mapping:
       miaosha_tx_group: seata-server
-    seata-server:
-      grouplist: www.coolboy.fun:xxxx
     enableDegrade: false
+    disable-global-transaction: false
   config:
     type: zk
     zk:

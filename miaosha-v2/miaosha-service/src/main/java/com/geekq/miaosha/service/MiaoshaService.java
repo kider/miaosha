@@ -160,7 +160,7 @@ public class MiaoshaService implements InitializingBean {
      * @author chenh
      * @date 2022/8/15 14:54
      **/
-    @GlobalTransactional(timeoutMills = 300000)
+    @GlobalTransactional(timeoutMills = 300000, rollbackFor = Exception.class)
     public long createMsOrder(User user, Goods goods) {
         System.out.println("开始全局事务，XID = " + RootContext.getXID());
         //减库存

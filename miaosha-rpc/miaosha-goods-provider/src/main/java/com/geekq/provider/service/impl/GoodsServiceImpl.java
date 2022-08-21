@@ -45,7 +45,7 @@ public class GoodsServiceImpl implements GoodsService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED)
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public Result<Boolean> reduceStock(Goods goods) {
         int ret = goodsMapper.reduceStock(goods);
         log.info("goodsId:" + goods.getGoodsId() + "reduceStock：" + ret);
