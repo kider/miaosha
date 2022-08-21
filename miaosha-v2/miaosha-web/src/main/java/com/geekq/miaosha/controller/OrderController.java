@@ -7,8 +7,8 @@ import com.geekq.api.base.exception.GlobleException;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
-import com.geekq.api.service.GoodsService;
-import com.geekq.api.service.OrderService;
+import com.geekq.api.service.GoodsDubboService;
+import com.geekq.api.service.OrderDubboService;
 import com.geekq.miaosha.interceptor.RequireLogin;
 import com.geekq.miasha.redis.OrderKey;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -26,10 +26,10 @@ import javax.servlet.http.HttpServletResponse;
 public class OrderController extends BaseController {
 
     @DubboReference
-    OrderService orderService;
+    OrderDubboService orderService;
 
     @DubboReference
-    GoodsService goodsService;
+    GoodsDubboService goodsService;
 
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/detail/{orderId}", produces = "text/html")

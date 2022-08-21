@@ -5,7 +5,7 @@ import com.geekq.api.pojo.Goods;
 
 import java.util.List;
 
-public interface GoodsService {
+public interface GoodsDubboService {
 
     Result<List<Goods>> list();
 

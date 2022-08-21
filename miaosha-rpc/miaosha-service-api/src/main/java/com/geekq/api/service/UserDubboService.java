@@ -2,7 +2,7 @@ package com.geekq.api.service;
 
 import com.geekq.api.base.Result;
 
-public interface UserService {
+public interface UserDubboService {
 
     Result<Boolean> getNickNameCount(String userName);
 

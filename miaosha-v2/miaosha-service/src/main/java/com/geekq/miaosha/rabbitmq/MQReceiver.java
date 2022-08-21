@@ -7,7 +7,7 @@ import com.geekq.api.base.exception.GlobleException;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
-import com.geekq.api.service.GoodsService;
+import com.geekq.api.service.GoodsDubboService;
 import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miaosha.service.MiaoshaService;
 import com.rabbitmq.client.Channel;
@@ -29,7 +29,7 @@ public class MQReceiver {
     RedisService redisService;
 
     @DubboReference
-    GoodsService goodsService;
+    GoodsDubboService goodsService;
 
     @Autowired
     MiaoshaService miaoshaService;

@@ -7,8 +7,8 @@ import com.geekq.api.base.exception.GlobleException;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
-import com.geekq.api.service.GoodsService;
-import com.geekq.api.service.OrderService;
+import com.geekq.api.service.GoodsDubboService;
+import com.geekq.api.service.OrderDubboService;
 import com.geekq.miaosha.rabbitmq.MQSender;
 import com.geekq.miaosha.rabbitmq.MiaoshaMessage;
 import com.geekq.miaosha.redis.RedisService;
@@ -40,9 +40,9 @@ import static com.geekq.api.base.enums.ResultStatus.*;
 public class MiaoshaService implements InitializingBean {
 
     @DubboReference
-    GoodsService goodsService;
+    GoodsDubboService goodsService;
     @DubboReference
-    OrderService orderService;
+    OrderDubboService orderService;
     @Autowired
     RedisService redisService;
     @Autowired

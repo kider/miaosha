@@ -2,7 +2,7 @@ package com.geekq.miaosha.controller;
 
 import com.geekq.api.base.AbstractResult;
 import com.geekq.api.base.Result;
-import com.geekq.api.service.UserService;
+import com.geekq.api.service.UserDubboService;
 import com.geekq.miaosha.redis.redismanager.RedisLua;
 import com.geekq.miaosha.service.RegisterService;
 import com.geekq.miaosha.utils.CookieUtils;
@@ -33,7 +33,7 @@ import static com.geekq.miasha.constants.Constants.COUNTLOGIN;
 public class RegisterController {
 
     @Autowired
-    private UserService userService;
+    private UserDubboService userService;
 
     @Autowired
     private RegisterService registerService;

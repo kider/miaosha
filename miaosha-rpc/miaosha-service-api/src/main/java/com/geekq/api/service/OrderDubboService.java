@@ -6,11 +6,12 @@ import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
 
 /**
- * 订单服务
+ * 订单Dubbo服务
  */
-public interface OrderService {
+public interface OrderDubboService {
 
     Result<Order> getOrderById(long orderId);
 
     Result<Order> createOrder(User user, Goods goods);
+
 }

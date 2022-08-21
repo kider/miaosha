@@ -3,7 +3,7 @@ package com.geekq.miaosha.controller;
 import com.geekq.api.base.AbstractResult;
 import com.geekq.api.base.Result;
 import com.geekq.api.base.enums.ResultStatus;
-import com.geekq.api.service.UserService;
+import com.geekq.api.service.UserDubboService;
 import com.geekq.miaosha.utils.CookieUtils;
 import com.geekq.miasha.utils.UUIDUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 public class LoginController {
 
     @DubboReference
-    private UserService userService;
+    private UserDubboService userService;
 
     @RequestMapping("/loginin")
     @ResponseBody

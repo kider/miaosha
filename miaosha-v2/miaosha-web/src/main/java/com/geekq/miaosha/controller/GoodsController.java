@@ -6,7 +6,7 @@ import com.geekq.api.base.enums.ResultStatus;
 import com.geekq.api.base.exception.GlobleException;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.User;
-import com.geekq.api.service.GoodsService;
+import com.geekq.api.service.GoodsDubboService;
 import com.geekq.miaosha.interceptor.RequireLogin;
 import com.geekq.miasha.redis.GoodsKey;
 import com.geekq.miasha.vo.GoodsDetailVo;
@@ -29,7 +29,7 @@ import java.util.List;
 public class GoodsController extends BaseController {
 
     @DubboReference
-    private GoodsService goodsService;
+    private GoodsDubboService goodsService;
 
     /**
      * 秒杀商品列表
