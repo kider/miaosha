@@ -170,7 +170,7 @@ public class MiaoshaService implements InitializingBean {
                 //下订单
                 Result<Order> orderResult = orderService.createOrder(user, goods);
                 if (!AbstractResult.isSuccess(orderResult)) {
-                    //失败的时候库存+1 TODO
+                    //失败的时候库存+1 TODO 放在这里是否合适？
                     log.error("创建订单失败 userId:{},orderId:{}", user.getNickname(), goods.getGoodsId());
                     redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goods.getGoodsId());
                     throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);
