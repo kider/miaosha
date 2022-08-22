@@ -176,6 +176,7 @@
                 <artifactId>zookeeper</artifactId>
                 <version>${zookeeper.version}</version>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/com.101tec/zkclient -->
             <dependency>
                 <groupId>com.101tec</groupId>
                 <artifactId>zkclient</artifactId>

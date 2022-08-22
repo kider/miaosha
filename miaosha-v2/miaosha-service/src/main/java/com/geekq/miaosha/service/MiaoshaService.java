@@ -103,18 +103,18 @@ public class MiaoshaService implements InitializingBean {
             return result;
         }
         //是否已经没有库存
-        //boolean over = getGoodsOver(goodsId);
+        boolean over = getGoodsOver(goodsId);
         //内存标记，减少redis访问
         // TODO 本地的怎么维护
-        boolean over = localOverMap.get(goodsId);
+        //boolean over = localOverMap.get(goodsId);
         if (over) {
             result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
             return result;
         }
-        //预见库存
+        //预减库存
         Long stock = redisService.decr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
         if (stock < 0) {
-            localOverMap.put(goodsId, true);
+            //localOverMap.put(goodsId, true);
             result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
             return result;
         }
@@ -160,9 +160,9 @@ public class MiaoshaService implements InitializingBean {
      * @author chenh
      * @date 2022/8/15 14:54
      **/
-    @GlobalTransactional(timeoutMills = 300000, rollbackFor = Exception.class)
+    @GlobalTransactional(timeoutMills = 300000, name = "createMsOrder", rollbackFor = Exception.class)
     public long createMsOrder(User user, Goods goods) {
-        System.out.println("开始全局事务，XID = " + RootContext.getXID());
+        log.info("createMsOrder全局事务，XID = " + RootContext.getXID());
         //减库存
         Result<Boolean> result = goodsService.reduceStock(goods);
         if (AbstractResult.isSuccess(result)) {
@@ -170,7 +170,9 @@ public class MiaoshaService implements InitializingBean {
                 //下订单
                 Result<Order> orderResult = orderService.createOrder(user, goods);
                 if (!AbstractResult.isSuccess(orderResult)) {
-                    //TODO 如果创建订单失败需要处理库存
+                    //失败的时候库存+1 TODO
+                    log.error("创建订单失败 userId:{},orderId:{}", user.getNickname(), goods.getGoodsId());
+                    redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goods.getGoodsId());
                     throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);
                 }
                 return orderResult.getData().getId();
@@ -209,7 +211,7 @@ public class MiaoshaService implements InitializingBean {
         if (!CollectionUtils.isEmpty(result.getData())) {
             for (Goods goods : result.getData()) {
                 redisService.set(GoodsKey.getMiaoshaGoodsStock, "" + goods.getId(), goods.getStockCount());
-                localOverMap.put(goods.getId(), false);
+                //localOverMap.put(goods.getId(), false);
             }
         }
     }

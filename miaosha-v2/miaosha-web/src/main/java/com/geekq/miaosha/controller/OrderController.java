@@ -35,6 +35,11 @@ public class OrderController extends BaseController {
     @RequestMapping(value = "/detail/{orderId}", produces = "text/html")
     public String info(HttpServletRequest request, HttpServletResponse response, Model model, User user,
                        @PathVariable("orderId") long orderId) {
+        final String redisKey = "" + orderId;
+        //取缓存
+        if (getCachePage(response, OrderKey.getOrderDetail, redisKey)) {
+            return null;
+        }
         Result<Order> orderResult = orderService.getOrderById(orderId);
         if (!AbstractResult.isSuccess(orderResult)) {
             throw new GlobleException(ResultStatus.ORDER_NOT_EXIST);

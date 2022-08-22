@@ -25,7 +25,7 @@ public class LoginController {
 
     @RequestMapping("/loginin")
     @ResponseBody
-    public Result<String> dologin(HttpServletResponse response, @RequestParam String nickname, @RequestParam String password) {
+    public Result<String> doLogin(HttpServletResponse response, @RequestParam String nickname, @RequestParam String password) {
         String token = UUIDUtils.uuid();
         Result<Boolean> result = userService.login(nickname, password, token);
         if (AbstractResult.isSuccess(result)) {

@@ -11,7 +11,6 @@ import com.geekq.miaosha.interceptor.RequireLogin;
 import com.geekq.miasha.redis.GoodsKey;
 import com.geekq.miasha.vo.GoodsDetailVo;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -44,6 +43,11 @@ public class GoodsController extends BaseController {
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/list", produces = "text/html")
     public String list(HttpServletRequest request, HttpServletResponse response, Model model, User user) {
+        final String redisKey = "goodsList";
+        //取缓存
+        if (getCachePage(response, GoodsKey.getGoodsList, redisKey)) {
+            return null;
+        }
         Result<List<Goods>> resultGoods = goodsService.list();
         if (!AbstractResult.isSuccess(resultGoods)) {
             throw new GlobleException(ResultStatus.SYSTEM_ERROR);
@@ -51,7 +55,7 @@ public class GoodsController extends BaseController {
         List<Goods> goodsList = resultGoods.getData();
         model.addAttribute("goodsList", goodsList);
         model.addAttribute("user", user);
-        return render(request, response, model, "goods_list", GoodsKey.getGoodsList, "goodsList");
+        return render(request, response, model, "goods_list", GoodsKey.getGoodsList, redisKey);
     }
 
     /**
@@ -70,12 +74,11 @@ public class GoodsController extends BaseController {
     @RequestMapping(value = "/detail/{goodsId}", produces = "text/html")
     public String detail2(HttpServletRequest request, HttpServletResponse response, Model model, User user,
                           @PathVariable("goodsId") long goodsId) {
-        final String redisKey = "goodsDetail";
+        final String redisKey = "goodsDetail" + goodsId;
         model.addAttribute("user", user);
         //取缓存
-        String html = redisService.get(GoodsKey.getGoodsDetail, redisKey + goodsId, String.class);
-        if (!StringUtils.isBlank(html)) {
-            return html;
+        if (getCachePage(response, GoodsKey.getGoodsDetail, redisKey)) {
+            return null;
         }
         Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
         if (!AbstractResult.isSuccess(goodsResult)) {
@@ -108,7 +111,7 @@ public class GoodsController extends BaseController {
         model.addAttribute("miaoshaStatus", miaoshaStatus);
         model.addAttribute("remainSeconds", remainSeconds);
 
-        return render(request, response, model, "goods_detail", GoodsKey.getGoodsDetail, redisKey + goodsId);
+        return render(request, response, model, "goods_detail", GoodsKey.getGoodsDetail, redisKey);
     }
 
     /**

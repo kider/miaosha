@@ -5,11 +5,10 @@ import com.geekq.api.base.enums.ResultStatus;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.service.GoodsDubboService;
 import com.geekq.provider.service.impl.GoodsServiceImpl;
+import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -45,8 +44,8 @@ public class GoodsDubboServiceImpl implements GoodsDubboService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public Result<Boolean> reduceStock(Goods goods) {
+        log.info("reduceStock全局事务，XID = " + RootContext.getXID());
         int ret = goodsService.reduceStock(goods);
         log.info("goodsId:" + goods.getGoodsId() + "reduceStock：" + ret);
         return Result.build(ret > 0);

@@ -20,7 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 
-import static com.geekq.api.base.enums.ResultStatus.ACCESS_LIMIT_REACHED;
+import static com.geekq.api.base.enums.ResultStatus.REQUEST_ILLEGAL;
 import static com.geekq.api.base.enums.ResultStatus.SESSION_ERROR;
 
 
@@ -65,7 +65,7 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
             } else if (count < maxCount) {
                 redisService.incr(ak, key);
             } else {
-                render(response, ACCESS_LIMIT_REACHED);
+                render(response, REQUEST_ILLEGAL);
                 return false;
             }
         }
