@@ -75,8 +75,8 @@ spring:
         max-wait: 500ms
         # 连接池中的最小空闲连接
         min-idle: 0
-    password: aptx4869
-    port: 6399
+    password: xxxx
+    port: 1234
 
     # 分布式事务
 seata:
