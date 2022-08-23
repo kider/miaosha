@@ -49,8 +49,8 @@ public class RedisClient {
     public static boolean set(String key, Object value) {
         Jedis jedis = null;
         try {
-            String objectJson = JSON.toJSONString(value);
             jedis = jedisPool.getResource();
+            String objectJson = JSON.toJSONString(value);
             jedis.set(key, objectJson);
             return true;
         } catch (Exception e) {
