@@ -50,6 +50,7 @@ public class MQReceiver {
                     throw new GlobleException(ResultStatus.GOODS_GET_FAIL);
                 }
                 Goods goods = goodsResult.getData();
+                //TODO 这里判断库存是否合适？是否可改为缓存中的
                 int stock = goods.getStockCount();
                 if (stock <= 0) {
                     log.error("nickname:{},goodsId:{},秒杀失败,没有库存了", user.getNickname(), goodsId);
