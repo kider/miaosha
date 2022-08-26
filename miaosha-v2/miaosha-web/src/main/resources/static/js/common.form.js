@@ -21,7 +21,6 @@ $(function () {
             $(this).parent().css({
                 'border': 'solid 1px red',
             });
-            $(this).parent().next().show();
         } else {
             $(this).css({
                 'color': '#ccc',
@@ -29,7 +28,6 @@ $(function () {
             $(this).parent().css({
                 'border': 'solid 1px #ccc',
             });
-            $(this).parent().next().hide();
         }
     });
 
