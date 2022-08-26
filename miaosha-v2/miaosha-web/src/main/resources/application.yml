@@ -21,6 +21,15 @@ redis:
   timeout: 10
 server:
   port: 9091
+  tomcat:
+    uri-encoding: UTF-8
+    threads:
+      max: 500
+      min-spare: 10
+  #ssl:
+    #key-store: classpath:coolboy.fun.tomcat.jks
+    #key-store-type: jks
+    #key-store-password: xxxx
 spring:
   rabbitmq:
     host: www.coolboy.fun
