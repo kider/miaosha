@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 
-import static com.geekq.api.base.enums.ResultStatus.REQUEST_ILLEGAL;
 import static com.geekq.api.base.enums.ResultStatus.SESSION_ERROR;
 
 
@@ -50,6 +49,7 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
             int seconds = accessLimit.seconds();
             int maxCount = accessLimit.maxCount();
             boolean needLogin = accessLimit.needLogin();
+            ResultStatus tips = accessLimit.tips();
             String key = request.getRequestURI();
             if (needLogin) {
                 if (user == null) {
@@ -65,7 +65,7 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
             } else if (count < maxCount) {
                 redisService.incr(ak, key);
             } else {
-                render(response, REQUEST_ILLEGAL);
+                render(response, tips);
                 return false;
             }
         }

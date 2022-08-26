@@ -1,0 +1,52 @@
+
+version: '3.7'
+
+services:
+  miaosha-admin:
+    image: miaosha-admin:latest
+    restart: "no"
+    network_mode: host
+    hostname: localhost
+    container_name: miaosha-admin
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /etc/timezone:/etc/timezone
+      - /share/software/miaosha/admin:/data/jar
+
+  miaosha-goods:
+    image: miaosha-goods:latest
+    restart: "no"
+    network_mode: host
+    hostname: localhost
+    container_name: miaosha-goods
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /etc/timezone:/etc/timezone
+      - /share/software/miaosha/goods:/data/jar
+
+  miaosha-order:
+    image: miaosha-order:latest
+    restart: "no"
+    network_mode: host
+    hostname: localhost
+    container_name: miaosha-order
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /etc/timezone:/etc/timezone
+      - /share/software/miaosha/order:/data/jar
+
+  miaosha-web:
+    image: miaosha-web:latest
+    restart: "no"
+    hostname: localhost
+    network_mode: host
+    container_name: miaosha-web
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /etc/timezone:/etc/timezone
+      - /share/software/miaosha/web:/data/jar
+
+#networks:
+#  default:
+#    external:
+#      name: host

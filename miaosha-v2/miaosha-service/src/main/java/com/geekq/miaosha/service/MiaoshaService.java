@@ -103,6 +103,7 @@ public class MiaoshaService implements InitializingBean {
             return result;
         }
         //是否已经没有库存
+        //TODO 是否考虑用分布式锁控制
         boolean over = getGoodsOver(goodsId);
         //内存标记，减少redis访问
         // TODO 本地的怎么维护

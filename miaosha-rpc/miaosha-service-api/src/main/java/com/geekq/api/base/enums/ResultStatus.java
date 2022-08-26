@@ -38,7 +38,7 @@ public enum ResultStatus {
      */
     BIND_ERROR(30001, "参数校验异常：%s"),
     ACCESS_LIMIT_REACHED(30002, "请求非法!"),
-    REQUEST_ILLEGAL(30004, "访问太频繁!"),
+    REQUEST_ILLEGAL(30004, "访问太频繁,请稍后再试!!!"),
     SESSION_ERROR(30005, "Session不存在或者已经失效!"),
     PASSWORD_EMPTY(30006, "登录密码不能为空!"),
     MOBILE_EMPTY(30007, "手机号不能为空!"),
@@ -51,31 +51,33 @@ public enum ResultStatus {
      * 订单模块
      */
     ORDER_NOT_EXIST(60001, "订单不存在"),
+    ORDER_WAIT_TIPS(60002, "系统处理中，请稍后在我的订单中查看最终秒杀结果"),
 
     /**
      * 秒杀模块
      */
-    MIAO_SHA_OVER(40001, "商品已经秒杀完毕"),
-    REPEATE_MIAOSHA(40002, "不能重复秒杀"),
-    MIAOSHA_FAIL(40003, "秒杀失败"),
-    ORDER_GET_FAIL(40004, "订单获取失败"),
-    ORDER_CREATE_FAIL(40005, "订单创建失败"),
+    MIAO_SHA_OVER(40001,"商品已经秒杀完毕"),
+
+    REPEATE_MIAOSHA(40002,"不能重复秒杀"),
+
+    MIAOSHA_FAIL(40003,"秒杀失败"),
+
+    ORDER_GET_FAIL(40004,"订单获取失败"),
+
+    ORDER_CREATE_FAIL(40005,"订单创建失败"),
+
     /**
      * 商品模块
      */
-    GOODS_GET_FAIL(50001, "获取秒杀商品失败");
+    GOODS_GET_FAIL(50001,"获取秒杀商品失败");
 
 
     private int code;
     private String message;
 
-    private ResultStatus(int code, String message) {
+    ResultStatus(int code, String message) {
         this.code = code;
         this.message = message;
-    }
-
-    private ResultStatus(Object... args) {
-        this.message = String.format(this.message, args);
     }
 
     public int getCode() {

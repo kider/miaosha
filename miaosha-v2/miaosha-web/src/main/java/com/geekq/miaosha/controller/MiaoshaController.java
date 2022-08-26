@@ -30,7 +30,6 @@ public class MiaoshaController {
     /**
      * 立即秒杀
      *
-     * @param model
      * @param user
      * @param path
      * @param goodsId
@@ -41,7 +40,7 @@ public class MiaoshaController {
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/{path}/miaosha", method = RequestMethod.POST)
     @ResponseBody
-    public Result<Integer> miaosha(Model model, User user, @PathVariable("path") String path,
+    public Result<Integer> miaosha(User user, @PathVariable("path") String path,
                                    @RequestParam("goodsId") long goodsId) {
         return miaoshaService.miaosha(user, goodsId, path);
     }
@@ -60,7 +59,7 @@ public class MiaoshaController {
      * @author chenh
      * @date 2022/8/15 14:31
      **/
-    @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
+    @RequireLogin(seconds = 5, maxCount = 10, tips = ORDER_WAIT_TIPS)
     @RequestMapping(value = "/result", method = RequestMethod.GET)
     @ResponseBody
     public Result<Long> miaoshaResult(Model model, User user,
