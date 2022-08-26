@@ -93,7 +93,7 @@
 
     <!--MAVEN打包duboo可执行jar begin -->
     <build>
-        <finalName>miaosha-admin-provider</finalName>VerifyCodeUtils
+        <finalName>miaosha-admin-provider</finalName>
         <resources>
             <resource>
                 <targetPath>${project.build.directory}/classes</targetPath>
