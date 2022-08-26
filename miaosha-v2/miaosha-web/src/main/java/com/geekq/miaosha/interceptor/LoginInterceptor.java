@@ -49,7 +49,6 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
             int seconds = accessLimit.seconds();
             int maxCount = accessLimit.maxCount();
             boolean needLogin = accessLimit.needLogin();
-            ResultStatus tips = accessLimit.tips();
             String key = request.getRequestURI();
             if (needLogin) {
                 if (user == null) {
@@ -65,6 +64,7 @@ public class LoginInterceptor extends HandlerInterceptorAdapter {
             } else if (count < maxCount) {
                 redisService.incr(ak, key);
             } else {
+                ResultStatus tips = accessLimit.tips();
                 render(response, tips);
                 return false;
             }

@@ -112,7 +112,6 @@ public class MiaoshaController {
     /**
      * 验证验证码值并返回path
      *
-     * @param request
      * @param user
      * @param goodsId
      * @param verifyCode
@@ -123,7 +122,7 @@ public class MiaoshaController {
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/path", method = RequestMethod.GET)
     @ResponseBody
-    public Result<String> getMiaoshaPath(HttpServletRequest request, User user,
+    public Result<String> getMiaoshaPath(User user,
                                          @RequestParam("goodsId") long goodsId,
                                          @RequestParam(value = "verifyCode", defaultValue = "0") int verifyCode
     ) {
