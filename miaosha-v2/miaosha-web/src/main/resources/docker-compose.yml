@@ -6,10 +6,13 @@ services:
     network_mode: host
     hostname: localhost
     container_name: miaosha-admin
+    environment:
+      - JAVA_OPTS=-server -Xms128m -Xmx128m -XX:+UseConcMarkSweepGC -XX:NewRatio=3 -XX:+UseContainerSupport -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=75 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/miaosha-admin.hprof -Xloggc:/var/log/miaosha-admin.log -verbose:gc
     volumes:
       - /etc/localtime:/etc/localtime
       - /etc/timezone:/etc/timezone
       - /share/software/miaosha/admin:/data/jar
+      - /share/software/miaosha/log:/var/log
 
   miaosha-goods:
     image: miaosha-goods:latest
@@ -17,10 +20,13 @@ services:
     network_mode: host
     hostname: localhost
     container_name: miaosha-goods
+    environment:
+      - JAVA_OPTS=-server -Xms128m -Xmx128m -XX:+UseConcMarkSweepGC -XX:NewRatio=3 -XX:+UseContainerSupport -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=75 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/miaosha-goods.hprof -Xloggc:/var/log/miaosha-goods.log -verbose:gc
     volumes:
       - /etc/localtime:/etc/localtime
       - /etc/timezone:/etc/timezone
       - /share/software/miaosha/goods:/data/jar
+      - /share/software/miaosha/log:/var/log
 
   miaosha-order:
     image: miaosha-order:latest
@@ -28,10 +34,13 @@ services:
     network_mode: host
     hostname: localhost
     container_name: miaosha-order
+    environment:
+      - JAVA_OPTS=-server -Xms128m -Xmx128m -XX:+UseConcMarkSweepGC -XX:NewRatio=3 -XX:+UseContainerSupport -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=75 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/miaosha-order.hprof -Xloggc:/var/log/miaosha-order.log -verbose:gc
     volumes:
       - /etc/localtime:/etc/localtime
       - /etc/timezone:/etc/timezone
       - /share/software/miaosha/order:/data/jar
+      - /share/software/miaosha/log:/var/log
 
   miaosha-web:
     image: miaosha-web:latest
@@ -39,12 +48,15 @@ services:
     hostname: localhost
     network_mode: host
     container_name: miaosha-web
+    environment:
+      - JAVA_OPTS=-server -Xms256m -Xmx256m -XX:+UseConcMarkSweepGC -XX:NewRatio=3 -XX:+UseContainerSupport -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=75 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/miaosha-web.hprof -Xloggc:/var/log/miaosha-web.log -verbose:gc
     volumes:
       - /etc/localtime:/etc/localtime
       - /etc/timezone:/etc/timezone
       - /share/software/miaosha/web:/data/jar
+      - /share/software/miaosha/log:/var/log
 
 #networks:
 #  default:
 #    external:
-#      name: host
+#      name: "miaosha-net"
