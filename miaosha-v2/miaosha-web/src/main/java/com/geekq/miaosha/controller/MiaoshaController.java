@@ -4,6 +4,7 @@ import com.geekq.api.base.Result;
 import com.geekq.api.pojo.User;
 import com.geekq.miaosha.interceptor.RequireLogin;
 import com.geekq.miaosha.service.MiaoshaService;
+import com.geekq.miaosha.utils.IpUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -40,9 +41,10 @@ public class MiaoshaController {
     @RequireLogin(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/{path}/miaosha", method = RequestMethod.POST)
     @ResponseBody
-    public Result<Integer> miaosha(User user, @PathVariable("path") String path,
+    public Result<Integer> miaosha(HttpServletRequest request, User user, @PathVariable("path") String path,
                                    @RequestParam("goodsId") long goodsId) {
-        return miaoshaService.miaosha(user, goodsId, path);
+        String ip = IpUtils.getRemoteIp(request);
+        return miaoshaService.miaosha(user, goodsId, path, ip);
     }
 
 

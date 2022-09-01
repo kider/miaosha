@@ -57,11 +57,12 @@ public class MiaoshaService implements InitializingBean {
      * @param user
      * @param goodsId
      * @param path
+     * @param ip
      * @return {@link Result< Integer>}
      * @author chenh
      * @date 2022/8/15 14:16
      **/
-    public Result<Integer> miaosha(User user, Long goodsId, String path) {
+    public Result<Integer> miaosha(User user, Long goodsId, String path, String ip) {
 
         Result<Integer> result = Result.build();
         if (user == null) {
@@ -86,7 +87,8 @@ public class MiaoshaService implements InitializingBean {
         }*/
 
         try {
-            boolean acc = RedisLimitRateWithLUA.accquire();
+            log.info("当前客户端IP:{}" + ip);
+            boolean acc = RedisLimitRateWithLUA.accquire(ip);
             if (!acc) {
                 result.withError(REQUEST_ILLEGAL.getCode(), REQUEST_ILLEGAL.getMessage());
                 return result;
@@ -171,7 +173,7 @@ public class MiaoshaService implements InitializingBean {
                 //下订单
                 Result<Order> orderResult = orderService.createOrder(user, goods);
                 if (!AbstractResult.isSuccess(orderResult)) {
-                    //失败的时候库存+1 TODO 放在这里是否合适？
+                    //订单失败的时候库存+1 TODO 放在这里是否合适？
                     log.error("创建订单失败 userId:{},orderId:{}", user.getNickname(), goods.getGoodsId());
                     redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goods.getGoodsId());
                     throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);

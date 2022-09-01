@@ -12,31 +12,6 @@ import java.util.List;
 @Slf4j
 public class RedisLua {
 
-    /**
-     * 未完成  需 evalsha更方便 限制ip 或者 手机号访问次数
-     */
-    public static void getLuaLimit() {
-
-        Jedis jedis = null;
-        try {
-            jedis = RedisManager.getJedis();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-        String lua =
-                "local num=redis.call('incr',KEYS[1]) if tonumber(num)==1 " +
-                        "then redis.call('expire',KEYS[1],ARGV[1]) " +
-                        "return 1 elseif tonumber(num)>" +
-                        "tonumber(ARGV[2]) then return 0 else return 1 end";
-
-        List<String> keys = new ArrayList<String>();
-        keys.add("ip:limit:127.0.0.1");
-        List<String> argves = new ArrayList<String>();
-        argves.add("6000");
-        argves.add("5");
-        String luaScript = jedis.scriptLoad(lua);
-        Object object = jedis.evalsha(luaScript, keys, argves);
-    }
 
     /**
      * 统计访问次数
@@ -78,31 +53,4 @@ public class RedisLua {
             log.error("统计访问次数失败！！！", e);
         }
     }
-
-
-    public static void currentlimitMinute() {
-        Jedis jedis = null;
-        try {
-            jedis = RedisManager.getJedis();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        String lua =
-                "local key = KEYS[1] " +
-                        "local limit = tonumber(ARGV[1]) " +
-                        "local current = tonumber(redis.call('get', key) or '0') " +
-                        "if current + 1 > limit then return 0 " +
-                        "else redis.call('INCRBY', key,'1')" +
-                        " redis.call('expire', key,'2') " +
-                        "end return 1";
-
-        List<String> keys = new ArrayList<String>();
-        keys.add("ip:limit:127.0.0.1");
-        List<String> argves = new ArrayList<String>();
-        argves.add("6000");
-        argves.add("5");
-        String luaScript = jedis.scriptLoad(lua);
-        jedis.evalsha(luaScript, keys, argves);
-    }
-
 }
