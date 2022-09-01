@@ -3,12 +3,10 @@ package com.geekq.provider.service.impl;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
 import com.geekq.api.pojo.User;
-import com.geekq.miasha.redis.OrderKey;
 import com.geekq.provider.mapper.OrderMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,11 +48,6 @@ public class OrderServiceImpl {
         order.setOrderId(orderInfo.getId());
         order.setUserId(Long.valueOf(user.getNickname()));
         orderMapper.insertMiaoshaOrder(order);
-        //缓存
-        ValueOperations<String, Order> operations = redisTemplate.opsForValue();
-        String orderKey = OrderKey.getMiaoshaOrderByUidGid.getPrefix() + user.getNickname() + "_" + goods.getId();
-        operations.set(orderKey, order);
-        log.info("createOrder key:" + orderKey + ",result:{}", order.getId());
         return orderInfo;
     }
 

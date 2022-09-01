@@ -13,6 +13,7 @@ import com.geekq.miaosha.rabbitmq.MQSender;
 import com.geekq.miaosha.rabbitmq.MiaoshaMessage;
 import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miaosha.redis.redismanager.RedisLimitRateWithLUA;
+import com.geekq.miaosha.redis.redismanager.RedisLock;
 import com.geekq.miasha.redis.GoodsKey;
 import com.geekq.miasha.redis.MiaoshaKey;
 import com.geekq.miasha.redis.OrderKey;
@@ -32,6 +33,7 @@ import javax.script.ScriptException;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.geekq.api.base.enums.ResultStatus.*;
 
@@ -87,7 +89,7 @@ public class MiaoshaService implements InitializingBean {
         }*/
 
         try {
-            log.info("当前客户端IP:{}" + ip);
+            log.info("当前客户端IP:{}", ip);
             boolean acc = RedisLimitRateWithLUA.accquire(ip);
             if (!acc) {
                 result.withError(REQUEST_ILLEGAL.getCode(), REQUEST_ILLEGAL.getMessage());
@@ -105,26 +107,38 @@ public class MiaoshaService implements InitializingBean {
             return result;
         }
         //是否已经没有库存
-        //TODO 是否考虑用分布式锁控制
         boolean over = getGoodsOver(goodsId);
         //内存标记，减少redis访问
-        // TODO 本地的怎么维护
-        //boolean over = localOverMap.get(goodsId);
         if (over) {
             result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
             return result;
         }
-        //预减库存
-        Long stock = redisService.decr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
-        if (stock < 0) {
-            //localOverMap.put(goodsId, true);
-            result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
-            return result;
+        //分布式锁
+        String lockKey = MiaoshaKey.getMiaoshaLock.getPrefix() + "_" + goodsId;
+        boolean lock = RedisLock.tryLock(3000, TimeUnit.MILLISECONDS, lockKey, path, "" + MiaoshaKey.getMiaoshaLock.expireSeconds());
+        if (lock) {
+            try {
+                //预减库存
+                Long stock = redisService.decr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
+                //订单MQ
+                if (stock >= 0) {
+                    MiaoshaMessage mm = new MiaoshaMessage();
+                    mm.setGoodsId(goodsId);
+                    mm.setUser(user);
+                    mqSender.sendMiaoshaMessage(mm);
+                } else {
+                    result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                result.withError(EXCEPTION.getCode(), MIAOSHA_FAIL.getMessage());
+            } finally {
+                RedisLock.releaseLock(lockKey, path);
+            }
+        } else {
+            //3秒内未获取到锁
+            result.withError(EXCEPTION.getCode(), MIAOSHA_FAIL.getMessage());
         }
-        MiaoshaMessage mm = new MiaoshaMessage();
-        mm.setGoodsId(goodsId);
-        mm.setUser(user);
-        mqSender.sendMiaoshaMessage(mm);
         return result;
     }
 
@@ -173,14 +187,17 @@ public class MiaoshaService implements InitializingBean {
                 //下订单
                 Result<Order> orderResult = orderService.createOrder(user, goods);
                 if (!AbstractResult.isSuccess(orderResult)) {
-                    //订单失败的时候库存+1 TODO 放在这里是否合适？
+                    //订单失败的时候缓存库存+1
                     log.error("创建订单失败 userId:{},orderId:{}", user.getNickname(), goods.getGoodsId());
                     redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goods.getGoodsId());
                     throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);
                 }
-                return orderResult.getData().getId();
+                //创建订单成功缓存标记
+                Order order = orderResult.getData();
+                redisService.set(OrderKey.getMiaoshaOrderByUidGid, user.getNickname() + "_" + goods.getId(), order);
+                return order.getId();
             } else {
-                //如果没有库存则标记为true
+                //如果没有库存则缓存标记为true
                 setGoodsOver(goods.getId());
             }
         }

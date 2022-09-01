@@ -16,30 +16,27 @@ public class RedisLimitRateWithLUA {
      **/
     public static boolean accquire(String ip) throws Exception {
         Jedis jedis = RedisManager.getJedis();
-        String lua =
-                //限流KEY
-                "local key = KEYS[1] " +
+        String lua =    //限流KEY
+                        "local key = KEYS[1] " +
                         //规则
                         "local limit = tonumber(ARGV[1]) " +
-                        "local expire_time = ARGV[2]" +
-                        //当前次数
-                        "local is_exists = redis.call('EXISTS', key)" +
-                        "if is_exists == 1 then" +
-                        "    if redis.call('INCR', key) > limit then" +
-                        "        return 0" +
+                        "local expire_time = ARGV[2] " +
+                        "local is_exists = redis.call('EXISTS', key) " +
+                        "if is_exists == 1 then " +
+                        "    if redis.call('INCR', key) > limit then " +
+                        "        return 0 " +
                         "    else" +
-                        "        return 1" +
-                        "    end" +
-                        "else" +
-                        "    redis.call('SET', key, 1)" +
-                        "    redis.call('EXPIRE', key, expire_time)" +
-                        "    return 1" +
-                        "end";
+                        "        return 1 end " +
+                        "else " +
+                        "    redis.call('SET', key, 1) " +
+                        "    redis.call('EXPIRE', key, expire_time) " +
+                        "    return 1 " +
+                        "end ";
         //IP
         String key = "ip:" + ip;
-        List<String> keys = new ArrayList<String>();
+        List<String> keys = new ArrayList<>();
         keys.add(key);
-        List<String> args = new ArrayList<String>();
+        List<String> args = new ArrayList<>();
         //最大限制 同一ip每2秒最多3次
         String limit = "3";
         args.add(limit);
