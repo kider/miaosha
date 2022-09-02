@@ -133,7 +133,8 @@ public class MiaoshaService implements InitializingBean {
                 log.error(e.getMessage());
                 result.withError(EXCEPTION.getCode(), MIAOSHA_FAIL.getMessage());
             } finally {
-                RedisLock.releaseLock(lockKey, path);
+                int r = RedisLock.releaseLock(lockKey, path);
+                log.info("path:{},releaseLock:{}", path, r);
             }
         } else {
             //3秒内未获取到锁

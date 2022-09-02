@@ -1,7 +1,9 @@
 package com.geekq.miasha.redis;
 
 public abstract class BasePrefix implements KeyPrefix {
-
+    /**
+     * 默认0代表永远过期
+     */
     private int expireSeconds;
 
     private String prefix;
@@ -16,7 +18,7 @@ public abstract class BasePrefix implements KeyPrefix {
     }
 
     @Override
-    public int expireSeconds() {//默认0代表永远过期
+    public int expireSeconds() {
         return expireSeconds;
     }
 
