@@ -2,7 +2,6 @@ package com.geekq.miaosha.service;
 
 import com.geekq.api.base.AbstractResult;
 import com.geekq.api.base.Result;
-import com.geekq.api.base.enums.ResultStatus;
 import com.geekq.api.base.exception.GlobleException;
 import com.geekq.api.pojo.Goods;
 import com.geekq.api.pojo.Order;
@@ -108,7 +107,6 @@ public class MiaoshaService implements InitializingBean {
         }
         //是否已经没有库存
         boolean over = getGoodsOver(goodsId);
-        //内存标记，减少redis访问
         if (over) {
             result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
             return result;
@@ -125,11 +123,19 @@ public class MiaoshaService implements InitializingBean {
                     MiaoshaMessage mm = new MiaoshaMessage();
                     mm.setGoodsId(goodsId);
                     mm.setUser(user);
-                    mqSender.sendMiaoshaMessage(mm);
+                    try {
+                        mqSender.sendMiaoshaMessage(mm);
+                    } catch (Exception e) {
+                        //处理库存
+                        redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
+                        throw new GlobleException(ORDER_MQ_SEND_ERROR);
+                    }
                 } else {
+                    //没有库存
                     result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
                 }
             } catch (Exception e) {
+                //返回失败
                 log.error(e.getMessage());
                 result.withError(EXCEPTION.getCode(), MIAOSHA_FAIL.getMessage());
             } finally {
@@ -138,6 +144,7 @@ public class MiaoshaService implements InitializingBean {
             }
         } else {
             //3秒内未获取到锁
+            log.error("3秒内没有获取到库存锁,返回失败");
             result.withError(EXCEPTION.getCode(), MIAOSHA_FAIL.getMessage());
         }
         return result;
@@ -183,24 +190,22 @@ public class MiaoshaService implements InitializingBean {
         log.info("createMsOrder全局事务，XID = " + RootContext.getXID());
         //减库存
         Result<Boolean> result = goodsService.reduceStock(goods);
-        if (AbstractResult.isSuccess(result)) {
-            if (result.getData()) {
-                //下订单
-                Result<Order> orderResult = orderService.createOrder(user, goods);
-                if (!AbstractResult.isSuccess(orderResult)) {
-                    //订单失败的时候缓存库存+1
-                    log.error("创建订单失败 userId:{},orderId:{}", user.getNickname(), goods.getGoodsId());
-                    redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goods.getGoodsId());
-                    throw new GlobleException(ResultStatus.ORDER_CREATE_FAIL);
-                }
-                //创建订单成功缓存标记
-                Order order = orderResult.getData();
-                redisService.set(OrderKey.getMiaoshaOrderByUidGid, user.getNickname() + "_" + goods.getId(), order);
-                return order.getId();
-            } else {
-                //如果没有库存则缓存标记为true
-                setGoodsOver(goods.getId());
+        if (!AbstractResult.isSuccess(result)) {
+            throw new GlobleException(result.getStatus());
+        }
+        if (result.getData()) {
+            //下订单
+            Result<Order> orderResult = orderService.createOrder(user, goods);
+            if (!AbstractResult.isSuccess(orderResult)) {
+                throw new GlobleException(orderResult.getStatus());
             }
+            Order order = orderResult.getData();
+            //创建订单成功缓存标记
+            redisService.set(OrderKey.getMiaoshaOrderByUidGid, user.getNickname() + "_" + goods.getId(), order);
+            return order.getId();
+        } else {
+            //如果没有库存则缓存标记为true
+            setGoodsOver(goods.getId());
         }
         return -1;
     }
