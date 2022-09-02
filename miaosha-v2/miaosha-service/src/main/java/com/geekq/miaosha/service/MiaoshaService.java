@@ -111,7 +111,7 @@ public class MiaoshaService implements InitializingBean {
             result.withError(EXCEPTION.getCode(), MIAO_SHA_OVER.getMessage());
             return result;
         }
-        //分布式锁
+        //TODO 这里的分布式锁不是必须的 主要是测试用
         String lockKey = MiaoshaKey.getMiaoshaLock.getPrefix() + "_" + goodsId;
         boolean lock = RedisLock.tryLock(3000, TimeUnit.MILLISECONDS, lockKey, path, "" + MiaoshaKey.getMiaoshaLock.expireSeconds());
         if (lock) {
