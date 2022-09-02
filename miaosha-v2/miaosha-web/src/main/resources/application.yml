@@ -24,7 +24,7 @@ server:
   tomcat:
     uri-encoding: UTF-8
     threads:
-      max: 500
+      max: 300
       min-spare: 10
   #ssl:
     #key-store: classpath:coolboy.fun.tomcat.jks
