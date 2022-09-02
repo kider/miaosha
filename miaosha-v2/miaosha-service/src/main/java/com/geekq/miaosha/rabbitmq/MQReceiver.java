@@ -10,6 +10,7 @@ import com.geekq.api.pojo.User;
 import com.geekq.api.service.GoodsDubboService;
 import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miaosha.service.MiaoshaService;
+import com.geekq.miasha.redis.GoodsKey;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -36,13 +37,13 @@ public class MQReceiver {
 
     @RabbitListener(queues = MQConfig.MIAOSHA_QUEUE)
     public void receive(Message message, Channel channel) {
+        String msg = new String(message.getBody(), StandardCharsets.UTF_8);
+        log.info("receive msg:" + msg);
+        MiaoshaMessage mm = RedisService.stringToBean(msg, MiaoshaMessage.class);
+        User user = mm.getUser();
+        long goodsId = mm.getGoodsId();
         try {
-            String msg = new String(message.getBody(), StandardCharsets.UTF_8);
-            log.info("receive msg:" + msg);
-            MiaoshaMessage mm = RedisService.stringToBean(msg, MiaoshaMessage.class);
-            User user = mm.getUser();
-            long goodsId = mm.getGoodsId();
-            //判断是否已经秒杀到了
+            //先判断是否已经秒杀成功了
             Order order = miaoshaService.getMiaoshaOrder(Long.parseLong(user.getNickname()), goodsId);
             if (null == order) {
                 Result<Goods> goodsResult = goodsService.getMsGoodsByGoodsId(goodsId);
@@ -51,7 +52,7 @@ public class MQReceiver {
                 }
                 Goods goods = goodsResult.getData();
                 int stock = goods.getStockCount();
-                //用缓存中的库存做判断
+                //用缓存中的库存做判断 TODO 暂时不行
                 //Long stock = redisService.get(GoodsKey.getMiaoshaGoodsStock, "" + goodsId, Long.class);
                 if (stock <= 0) {
                     log.error("nickname:{},goodsId:{},秒杀失败,没有库存了", user.getNickname(), goodsId);
@@ -75,17 +76,18 @@ public class MQReceiver {
                 }
             }
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("创建订单失败 userId:{},orderId:{},", user.getNickname(), goodsId, e);
+            //订单失败的时候缓存库存+1
+            redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
             //TODO
             //可以设置最大重试次数 再次放到队列里
             //如果超过最大次数还是失败 可放到单独的“死信队列”里处理
-
             //直接丢弃
             try {
                 channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);
                 log.error("丢弃消息,秒杀失败:{}", e.getMessage());
-            } catch (IOException e1) {
-                log.error(e1.getMessage());
+            } catch (IOException ioException) {
+                log.error(ioException.getMessage());
             }
         }
     }
