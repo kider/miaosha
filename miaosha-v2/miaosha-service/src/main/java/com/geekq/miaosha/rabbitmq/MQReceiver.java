@@ -52,7 +52,7 @@ public class MQReceiver {
                 }
                 Goods goods = goodsResult.getData();
                 int stock = goods.getStockCount();
-                //用缓存中的库存做判断 TODO 暂时不行
+                //用缓存中的库存做判断 TODO 暂时不行 拿不到商品其他信息
                 //Long stock = redisService.get(GoodsKey.getMiaoshaGoodsStock, "" + goodsId, Long.class);
                 if (stock <= 0) {
                     log.error("nickname:{},goodsId:{},秒杀失败,没有库存了", user.getNickname(), goodsId);
