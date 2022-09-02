@@ -46,9 +46,14 @@ public class GoodsDubboServiceImpl implements GoodsDubboService {
     @Override
     public Result<Boolean> reduceStock(Goods goods) {
         log.info("reduceStock全局事务，XID = " + RootContext.getXID());
-        int ret = goodsService.reduceStock(goods);
-        log.info("goodsId:" + goods.getGoodsId() + "reduceStock：" + ret);
-        return Result.build(ret > 0);
+        try {
+            int ret = goodsService.reduceStock(goods);
+            log.info("goodsId:" + goods.getGoodsId() + "reduceStock：" + ret);
+            return Result.build(ret > 0);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Result.error(ResultStatus.GOODS_REDUCESTOCK_FAIL);
+        }
     }
 
 }
