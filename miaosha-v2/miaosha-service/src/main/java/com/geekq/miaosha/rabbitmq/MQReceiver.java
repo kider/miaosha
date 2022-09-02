@@ -76,7 +76,7 @@ public class MQReceiver {
                 }
             }
         } catch (Exception e) {
-            log.error("创建订单失败 userId:{},orderId:{},", user.getNickname(), goodsId, e);
+            log.error("创建订单失败 userId:{},goodsId:{},", user.getNickname(), goodsId, e);
             //订单失败的时候缓存库存+1
             redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
             //TODO
