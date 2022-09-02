@@ -1,0 +1,1 @@
+java -server -Xms4g -Xmx4g -XX:+UseConcMarkSweepGC -XX:NewRatio=3 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=75 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/log/miaosha-web.hprof -Xloggc:/var/log/miaosha-web.log -verbose:gc -jar ./target/miaosha-web.jar
