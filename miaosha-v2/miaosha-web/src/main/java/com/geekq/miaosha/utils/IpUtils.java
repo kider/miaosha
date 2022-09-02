@@ -44,7 +44,7 @@ public class IpUtils {
             remoteIp = request.getRemoteHost();
         }
         // 如果是多级代理，那么取第一个ip为客户ip
-        if (remoteIp != null && remoteIp.indexOf(",") != -1) {
+        if (remoteIp != null && remoteIp.contains(",")) {
             remoteIp = remoteIp.substring(0, remoteIp.indexOf(",")).trim();
         }
         return remoteIp;
