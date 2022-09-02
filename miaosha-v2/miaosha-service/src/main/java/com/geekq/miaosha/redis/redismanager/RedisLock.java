@@ -88,7 +88,7 @@ public class RedisLock {
     }
 
     /**
-     * 加锁
+     * 解锁
      *
      * @param key       锁KEY
      * @param requestId 请求ID

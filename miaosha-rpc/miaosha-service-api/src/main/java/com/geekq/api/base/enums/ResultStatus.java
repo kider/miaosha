@@ -52,24 +52,26 @@ public enum ResultStatus {
      */
     ORDER_NOT_EXIST(60001, "订单不存在"),
     ORDER_WAIT_TIPS(60002, "系统处理中，请稍后在我的订单中查看最终秒杀结果"),
+    ORDER_MQ_SEND_ERROR(60003, "发送订单MQ失败"),
 
     /**
      * 秒杀模块
      */
-    MIAO_SHA_OVER(40001,"商品已经秒杀完毕"),
+    MIAO_SHA_OVER(40001, "商品已经秒杀完毕"),
 
-    REPEATE_MIAOSHA(40002,"不能重复秒杀"),
+    REPEATE_MIAOSHA(40002, "不能重复秒杀"),
 
-    MIAOSHA_FAIL(40003,"秒杀失败"),
+    MIAOSHA_FAIL(40003, "秒杀失败"),
 
-    ORDER_GET_FAIL(40004,"订单获取失败"),
+    ORDER_GET_FAIL(40004, "订单获取失败"),
 
-    ORDER_CREATE_FAIL(40005,"订单创建失败"),
+    ORDER_CREATE_FAIL(40005, "订单创建失败"),
 
     /**
      * 商品模块
      */
-    GOODS_GET_FAIL(50001,"获取秒杀商品失败");
+    GOODS_GET_FAIL(50001, "获取秒杀商品失败"),
+    GOODS_REDUCESTOCK_FAIL(50002, "减库存失败");
 
 
     private int code;
