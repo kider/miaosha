@@ -17,7 +17,7 @@ public class RedisLimitRateWithLUA {
     public static boolean accquire(String ip) throws Exception {
         Jedis jedis = RedisManager.getJedis();
         String lua =    //限流KEY
-                        "local key = KEYS[1] " +
+                "local key = KEYS[1] " +
                         //规则
                         "local limit = tonumber(ARGV[1]) " +
                         "local expire_time = ARGV[2] " +
@@ -37,8 +37,8 @@ public class RedisLimitRateWithLUA {
         List<String> keys = new ArrayList<>();
         keys.add(key);
         List<String> args = new ArrayList<>();
-        //最大限制 同一ip每2秒最多3次
-        String limit = "3";
+        //最大限制 同一ip每2秒最多10次
+        String limit = "10";
         args.add(limit);
         //过期时间
         String expireTime = "2";
