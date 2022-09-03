@@ -23,7 +23,7 @@ public class RedisManager {
 
     public static void returnJedis(Jedis jedis) throws RuntimeException {
         if (null != jedis) {
-            jedisPool.returnResource(jedis);
+            jedis.close();
         }
     }
 

@@ -11,10 +11,12 @@ public class RedisClient {
     /**
      * 池化管理jedis链接池
      */
-    public static JedisPool jedisPool;
+    public static JedisPool jedisPool = null;
 
     static {
-        jedisPool = SpringUtil.getBean(JedisPool.class);
+        if (null != jedisPool) {
+            jedisPool = SpringUtil.getBean(JedisPool.class);
+        }
     }
 
     /**
@@ -35,9 +37,7 @@ public class RedisClient {
             log.error(e.getMessage());
             return false;
         } finally {
-            if (null != jedis) {
-                jedisPool.returnResource(jedis);
-            }
+            returnJedis(jedis);
         }
     }
 
@@ -59,9 +59,7 @@ public class RedisClient {
             log.error(e.getMessage());
             return false;
         } finally {
-            if (null != jedis) {
-                jedisPool.returnResource(jedis);
-            }
+            returnJedis(jedis);
         }
     }
 
@@ -81,9 +79,7 @@ public class RedisClient {
             log.error(e.getMessage());
             return false;
         } finally {
-            if (null != jedis) {
-                jedisPool.returnResource(jedis);
-            }
+            returnJedis(jedis);
         }
     }
 
@@ -103,9 +99,7 @@ public class RedisClient {
             log.error(e.getMessage());
             return false;
         } finally {
-            if (null != jedis) {
-                jedisPool.returnResource(jedis);
-            }
+            returnJedis(jedis);
         }
     }
 
@@ -125,10 +119,14 @@ public class RedisClient {
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            if (null != jedis) {
-                jedisPool.returnResource(jedis);
-            }
+            returnJedis(jedis);
         }
         return null;
+    }
+
+    public static void returnJedis(Jedis jedis) throws RuntimeException {
+        if (null != jedis) {
+            jedis.close();
+        }
     }
 }

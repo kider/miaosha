@@ -66,11 +66,11 @@ public class RedisService {
             jedis = jedisPool.getResource();
             result = jedis.setnx(key, value);
         } catch (Exception e) {
-            log.error("expire key:{} error", key, e);
-            jedisPool.returnResource(jedis);
+            log.error("setnx key:{} error", key, e);
             return result;
+        } finally {
+            returnToPool(jedis);
         }
-        jedisPool.returnResource(jedis);
         return result;
 
     }
@@ -90,10 +90,10 @@ public class RedisService {
             result = jedis.expire(key, exTime);
         } catch (Exception e) {
             log.error("expire key:{} error", key, e);
-            jedisPool.returnBrokenResource(jedis);
             return result;
+        } finally {
+            returnToPool(jedis);
         }
-        jedisPool.returnResource(jedis);
         return result;
     }
 
@@ -102,13 +102,17 @@ public class RedisService {
      */
     public <T> T get(KeyPrefix prefix, String key, Class<T> clazz) {
         Jedis jedis = null;
+        T result = null;
         try {
             jedis = jedisPool.getResource();
             //生成真正的key
             String realKey = prefix.getPrefix() + key;
             String str = jedis.get(realKey);
-            T t = stringToBean(str, clazz);
-            return t;
+            result = stringToBean(str, clazz);
+            return result;
+        } catch (Exception e) {
+            log.error("get key:{} error", key, e);
+            return result;
         } finally {
             returnToPool(jedis);
         }
@@ -121,11 +125,11 @@ public class RedisService {
             jedis = jedisPool.getResource();
             result = jedis.get(key);
         } catch (Exception e) {
-            log.error("expire key:{} error", key, e);
-            jedisPool.returnBrokenResource(jedis);
+            log.error("get key:{} error", key, e);
             return result;
+        } finally {
+            returnToPool(jedis);
         }
-        jedisPool.returnResource(jedis);
         return result;
     }
 
@@ -136,11 +140,11 @@ public class RedisService {
             jedis = jedisPool.getResource();
             result = jedis.getSet(key, value);
         } catch (Exception e) {
-            log.error("expire key:{} error", key, e);
-            jedisPool.returnBrokenResource(jedis);
+            log.error("getset key:{} error", key, e);
             return result;
+        } finally {
+            returnToPool(jedis);
         }
-        jedisPool.returnResource(jedis);
         return result;
     }
 
@@ -164,6 +168,9 @@ public class RedisService {
                 jedis.setex(realKey, seconds, str);
             }
             return true;
+        } catch (Exception e) {
+            log.error("set key:{} error", key, e);
+            return false;
         } finally {
             returnToPool(jedis);
         }
@@ -179,6 +186,9 @@ public class RedisService {
             //生成真正的key
             String realKey = prefix.getPrefix() + key;
             return jedis.exists(realKey);
+        } catch (Exception e) {
+            log.error("exists key:{} error", key, e);
+            return false;
         } finally {
             returnToPool(jedis);
         }
@@ -195,6 +205,9 @@ public class RedisService {
             String realKey = prefix.getPrefix() + key;
             long ret = jedis.del(realKey);
             return ret > 0;
+        } catch (Exception e) {
+            log.error("delete key:{} error", key, e);
+            return false;
         } finally {
             returnToPool(jedis);
         }
@@ -210,6 +223,9 @@ public class RedisService {
             //生成真正的key
             String realKey = prefix.getPrefix() + key;
             return jedis.incr(realKey);
+        } catch (Exception e) {
+            log.error("incr key:{} error", key, e);
+            return -1L;
         } finally {
             returnToPool(jedis);
         }
@@ -225,6 +241,9 @@ public class RedisService {
             //生成真正的key
             String realKey = prefix.getPrefix() + key;
             return jedis.decr(realKey);
+        } catch (Exception e) {
+            log.error("decr key:{} error", key, e);
+            return -1L;
         } finally {
             returnToPool(jedis);
         }
@@ -238,10 +257,10 @@ public class RedisService {
             result = jedis.del(key);
         } catch (Exception e) {
             log.error("del key:{} error", key, e);
-            jedisPool.returnBrokenResource(jedis);
             return result;
+        } finally {
+            returnToPool(jedis);
         }
-        jedisPool.returnResource(jedis);
         return result;
     }
 
@@ -254,25 +273,24 @@ public class RedisService {
             return true;
         }
         Jedis jedis = null;
+        String[] key = keys.toArray(new String[0]);
         try {
             jedis = jedisPool.getResource();
-            jedis.del(keys.toArray(new String[0]));
+            jedis.del(key);
             return true;
-        } catch (final Exception e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error("delete key:{} error", key, e);
             return false;
         } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
+            returnToPool(jedis);
         }
     }
 
     public List<String> scanKeys(String key) {
         Jedis jedis = null;
+        List<String> keys = new ArrayList<String>();
         try {
             jedis = jedisPool.getResource();
-            List<String> keys = new ArrayList<String>();
             String cursor = "0";
             ScanParams sp = new ScanParams();
             sp.match("*" + key + "*");
@@ -287,10 +305,11 @@ public class RedisService {
                 cursor = ret.getCursor();
             } while (!cursor.equals("0"));
             return keys;
+        } catch (Exception e) {
+            log.error("scanKeys key:{} error", keys, e);
+            return keys;
         } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
+            returnToPool(jedis);
         }
     }
 
