@@ -35,7 +35,9 @@ public class RedisClient {
             log.error(e.getMessage());
             return false;
         } finally {
-            jedisPool.returnResource(jedis);
+            if (null != jedis) {
+                jedisPool.returnResource(jedis);
+            }
         }
     }
 
@@ -57,7 +59,9 @@ public class RedisClient {
             log.error(e.getMessage());
             return false;
         } finally {
-            jedisPool.returnResource(jedis);
+            if (null != jedis) {
+                jedisPool.returnResource(jedis);
+            }
         }
     }
 
@@ -77,7 +81,9 @@ public class RedisClient {
             log.error(e.getMessage());
             return false;
         } finally {
-            jedisPool.returnResource(jedis);
+            if (null != jedis) {
+                jedisPool.returnResource(jedis);
+            }
         }
     }
 
@@ -97,7 +103,9 @@ public class RedisClient {
             log.error(e.getMessage());
             return false;
         } finally {
-            jedisPool.returnResource(jedis);
+            if (null != jedis) {
+                jedisPool.returnResource(jedis);
+            }
         }
     }
 
@@ -117,7 +125,9 @@ public class RedisClient {
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            jedisPool.returnResource(jedis);
+            if (null != jedis) {
+                jedisPool.returnResource(jedis);
+            }
         }
         return null;
     }

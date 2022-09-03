@@ -21,4 +21,10 @@ public class RedisManager {
         throw new RuntimeException("Jedispool was not init !!!");
     }
 
+    public static void returnJedis(Jedis jedis) throws RuntimeException {
+        if (null != jedis) {
+            jedisPool.returnResource(jedis);
+        }
+    }
+
 }

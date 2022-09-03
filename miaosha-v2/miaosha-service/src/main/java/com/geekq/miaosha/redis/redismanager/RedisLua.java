@@ -32,6 +32,8 @@ public class RedisLua {
         } catch (Exception e) {
             log.error("统计访问次数失败！！！", e);
             return "0";
+        } finally {
+            RedisManager.returnJedis(jedis);
         }
         return object;
     }
@@ -51,6 +53,8 @@ public class RedisLua {
             jedis.evalsha(luaScript, keys, argves);
         } catch (Exception e) {
             log.error("统计访问次数失败！！！", e);
+        } finally {
+            RedisManager.returnJedis(jedis);
         }
     }
 }

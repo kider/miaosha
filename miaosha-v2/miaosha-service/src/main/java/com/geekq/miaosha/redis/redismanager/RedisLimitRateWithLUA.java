@@ -5,6 +5,7 @@ import redis.clients.jedis.Jedis;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class RedisLimitRateWithLUA {
 
     /**
@@ -15,36 +16,41 @@ public class RedisLimitRateWithLUA {
      * @date 2022/8/17 15:59
      **/
     public static boolean accquire(String ip) throws Exception {
-        Jedis jedis = RedisManager.getJedis();
-        String lua =    //限流KEY
-                "local key = KEYS[1] " +
-                        //规则
-                        "local limit = tonumber(ARGV[1]) " +
-                        "local expire_time = ARGV[2] " +
-                        "local is_exists = redis.call('EXISTS', key) " +
-                        "if is_exists == 1 then " +
-                        "    if redis.call('INCR', key) > limit then " +
-                        "        return 0 " +
-                        "    else" +
-                        "        return 1 end " +
-                        "else " +
-                        "    redis.call('SET', key, 1) " +
-                        "    redis.call('EXPIRE', key, expire_time) " +
-                        "    return 1 " +
-                        "end ";
-        //IP
-        String key = "ip:" + ip;
-        List<String> keys = new ArrayList<>();
-        keys.add(key);
-        List<String> args = new ArrayList<>();
-        //最大限制 同一ip每2秒最多10次
-        String limit = "10";
-        args.add(limit);
-        //过期时间
-        String expireTime = "2";
-        args.add(expireTime);
-        String luaScript = jedis.scriptLoad(lua);
-        Long result = (Long) jedis.evalsha(luaScript, keys, args);
-        return result == 1;
+        Jedis jedis = null;
+        try {
+            jedis = RedisManager.getJedis();
+            String lua =    //限流KEY
+                    "local key = KEYS[1] " +
+                            //规则
+                            "local limit = tonumber(ARGV[1]) " +
+                            "local expire_time = ARGV[2] " +
+                            "local is_exists = redis.call('EXISTS', key) " +
+                            "if is_exists == 1 then " +
+                            "    if redis.call('INCR', key) > limit then " +
+                            "        return 0 " +
+                            "    else" +
+                            "        return 1 end " +
+                            "else " +
+                            "    redis.call('SET', key, 1) " +
+                            "    redis.call('EXPIRE', key, expire_time) " +
+                            "    return 1 " +
+                            "end ";
+            //IP
+            String key = "ip:" + ip;
+            List<String> keys = new ArrayList<>();
+            keys.add(key);
+            List<String> args = new ArrayList<>();
+            //最大限制 同一ip每2秒最多10次
+            args.add("10");
+            //过期时间
+            args.add("2");
+            String luaScript = jedis.scriptLoad(lua);
+            Long result = (Long) jedis.evalsha(luaScript, keys, args);
+            return result == 1;
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            RedisManager.returnJedis(jedis);
+        }
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 @Configuration
 public class WebConfig extends WebMvcConfigurerAdapter {
 
-    final String[] notLoginInterceptPaths = {"/do_login/**"};
+    final String[] notLoginInterceptPaths = {"/login/**"};
     @Autowired
     UserArgumentResolver resolver;
     @Autowired
