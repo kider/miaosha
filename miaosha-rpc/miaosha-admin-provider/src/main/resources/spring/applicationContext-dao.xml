@@ -43,11 +43,6 @@
 				  value="classpath*:mybatis/mapper/*.xml" />
 	</bean>
 
-	<!--&lt;!&ndash; 配置自动扫描Mapper &ndash;&gt;-->
-	<!--<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">-->
-		<!--<property name="basePackage"-->
-				  <!--value="com.eloan.base.mapper;com.eloan.business.mapper" />-->
-	<!--</bean>-->
 	<!-- 配置扫描包，加载mapper代理对象 -->
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
 		<property name="basePackage" value="com.geekq.admin.mapper"></property>
