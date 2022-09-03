@@ -11,6 +11,7 @@ import com.geekq.api.service.GoodsDubboService;
 import com.geekq.miaosha.redis.RedisService;
 import com.geekq.miaosha.service.MiaoshaService;
 import com.geekq.miasha.redis.GoodsKey;
+import com.geekq.miasha.redis.MiaoshaKey;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -79,6 +80,8 @@ public class MQReceiver {
             log.error("创建订单失败 userId:{},goodsId:{},", user.getNickname(), goodsId, e);
             //订单失败的时候缓存库存+1
             redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
+            //删除无库存标记
+            redisService.delete(MiaoshaKey.isGoodsOver, "" + goodsId);
             //TODO
             //可以设置最大重试次数 再次放到队列里
             //如果超过最大次数还是失败 可放到单独的“死信队列”里处理
