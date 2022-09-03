@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="false" scanPeriod="60 seconds" debug="false">
+
+    <property name="appName" scope="context" value="miaosha-goods"/>
+    <property name="LOG_DIR" value="/var/log/${appName}/"/>
+    <property name="LOG_BAK_DIR" value="${LOG_DIR}/bak"/>
+    <property name="LOG_MAX_FILE_SIZE" value="1GB"/>
+    <property name="LOG_MAX_HISTORY" value="30"/>
+    <property name="APP_APPENDER_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%logger] [%-5level] - %msg%n"/>
+    <property name="CONSOLE_APPENDER_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%logger] [%-5level] - %msg%n"/>
+
+    <property name="CONSOLE_LOGLEVEL" value="INFO"/>
+
+    <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${CONSOLE_APPENDER_PATTERN}</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="appErrorAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <file>${LOG_DIR}/app.error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_BAK_DIR}/app.%i.%d{yyyy-MM-dd}.error.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>${LOG_MAX_FILE_SIZE}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${APP_APPENDER_PATTERN}</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="appInfoAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <file>${LOG_DIR}/app.info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_BAK_DIR}/app.%i.%d{yyyy-MM-dd}.info.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>${LOG_MAX_FILE_SIZE}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${APP_APPENDER_PATTERN}</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="asyncErrorAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="appErrorAppender"/>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <appender name="asyncInfoAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="appInfoAppender"/>
+        <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <root level="${CONSOLE_LOGLEVEL}">
+        <appender-ref ref="consoleAppender"/>
+        <appender-ref ref="asyncInfoAppender"/>
+        <appender-ref ref="asyncErrorAppender"/>
+    </root>
+
+</configuration>
