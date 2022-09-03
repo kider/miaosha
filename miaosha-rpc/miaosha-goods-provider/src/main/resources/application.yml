@@ -12,7 +12,6 @@ mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
   type-aliases-package: com.geekq.api.pojo
 spring:
-  transaction:
   application:
     name: miaosha-goods-provider
   datasource:
