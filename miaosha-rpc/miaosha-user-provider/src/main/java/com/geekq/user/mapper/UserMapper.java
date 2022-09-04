@@ -1,4 +1,4 @@
-package com.geekq.admin.mapper;
+package com.geekq.user.mapper;
 
 
 import com.geekq.api.pojo.User;

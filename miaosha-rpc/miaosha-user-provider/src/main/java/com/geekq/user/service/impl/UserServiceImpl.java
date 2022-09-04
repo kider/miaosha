@@ -1,7 +1,7 @@
-package com.geekq.admin.service.impl;
+package com.geekq.user.service.impl;
 
-import com.geekq.admin.mapper.UserMapper;
-import com.geekq.admin.redis.RedisClient;
+import com.geekq.user.mapper.UserMapper;
+import com.geekq.user.redis.RedisClient;
 import com.geekq.api.pojo.User;
 import com.geekq.miasha.redis.UserKey;
 import com.geekq.miasha.utils.MD5Utils;

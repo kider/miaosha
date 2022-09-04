@@ -37,7 +37,7 @@
 		<property name="configLocation" value="classpath:mybatis/SqlMapConfig.xml"></property>
 		<property name="dataSource" ref="dataSource"></property>
 		<property name="typeAliasesPackage"
-				  value="com.geekq.admin.entity" />
+				  value="com.geekq.user.entity" />
 
 		<property name="mapperLocations"
 				  value="classpath*:mybatis/mapper/*.xml" />
@@ -45,7 +45,7 @@
 
 	<!-- 配置扫描包，加载mapper代理对象 -->
 	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-		<property name="basePackage" value="com.geekq.admin.mapper"></property>
+		<property name="basePackage" value="com.geekq.user.mapper"></property>
 	</bean>
 
 </beans>

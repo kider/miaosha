@@ -1,4 +1,4 @@
-package com.geekq.admin.utils;
+package com.geekq.user.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;

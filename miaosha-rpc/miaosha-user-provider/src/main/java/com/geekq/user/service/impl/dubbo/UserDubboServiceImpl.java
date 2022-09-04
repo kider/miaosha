@@ -1,7 +1,7 @@
-package com.geekq.admin.service.impl.dubbo;
+package com.geekq.user.service.impl.dubbo;
 
-import com.geekq.admin.redis.RedisClient;
-import com.geekq.admin.service.impl.UserServiceImpl;
+import com.geekq.user.redis.RedisClient;
+import com.geekq.user.service.impl.UserServiceImpl;
 import com.geekq.api.base.Result;
 import com.geekq.api.base.enums.ResultStatus;
 import com.geekq.api.pojo.User;

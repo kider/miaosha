@@ -9,7 +9,7 @@
     </parent>
 
     <groupId>com.geekq.provider</groupId>
-    <artifactId>miaosha-admin-provider</artifactId>
+    <artifactId>miaosha-user-provider</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -93,7 +93,7 @@
 
     <!--MAVEN打包duboo可执行jar begin -->
     <build>
-        <finalName>miaosha-admin-provider</finalName>
+        <finalName>miaosha-user-provider</finalName>
         <resources>
             <resource>
                 <targetPath>${project.build.directory}/classes</targetPath>
@@ -129,7 +129,7 @@
                     <classesDirectory>target/classes</classesDirectory>
                     <archive>
                         <manifest>
-                            <mainClass>com.geekq.admin.AdminDubboProvider</mainClass>
+                            <mainClass>com.geekq.user.UserDubboProvider</mainClass>
                             <!-- 打包时 MANIFEST.MF文件不记录的时间戳版本 -->
                             <useUniqueVersions>false</useUniqueVersions>
                             <addClasspath>true</addClasspath>

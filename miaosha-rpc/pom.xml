@@ -15,7 +15,7 @@
 
     <modules>
         <module>miaosha-service-api</module>
-        <module>miaosha-admin-provider</module>
+        <module>miaosha-user-provider</module>
         <module>miaosha-goods-provider</module>
         <module>miaosha-order-provider</module>
     </modules>

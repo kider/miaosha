@@ -1,7 +1,7 @@
-package com.geekq.admin.redis;
+package com.geekq.user.redis;
 
 import com.alibaba.fastjson.JSON;
-import com.geekq.admin.utils.SpringUtil;
+import com.geekq.user.utils.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
