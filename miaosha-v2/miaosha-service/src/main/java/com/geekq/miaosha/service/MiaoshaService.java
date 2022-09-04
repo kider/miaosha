@@ -165,7 +165,7 @@ public class MiaoshaService implements InitializingBean {
     public long getMiaoshaResult(Long userId, long goodsId) {
         Order order = getMiaoshaOrder(userId, goodsId);
         if (null != order) {
-            return order.getOrderId();
+            return order.getId();
         }
         boolean isOver = getGoodsOver(goodsId);
         if (isOver) {
