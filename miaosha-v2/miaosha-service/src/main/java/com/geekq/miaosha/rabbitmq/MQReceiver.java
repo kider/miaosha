@@ -39,7 +39,7 @@ public class MQReceiver {
     @RabbitListener(queues = MQConfig.MIAOSHA_QUEUE)
     public void receive(Message message, Channel channel) {
         String msg = new String(message.getBody(), StandardCharsets.UTF_8);
-        log.info("receive msg:" + msg);
+        log.info("receive msg:{}", msg);
         MiaoshaMessage mm = RedisService.stringToBean(msg, MiaoshaMessage.class);
         User user = mm.getUser();
         long goodsId = mm.getGoodsId();
