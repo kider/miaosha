@@ -235,11 +235,13 @@ public class MiaoshaService implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         Result<List<Goods>> result = goodsService.list();
         if (!CollectionUtils.isEmpty(result.getData())) {
-            //TODO 分布式下是不是要做处理
             for (Goods goods : result.getData()) {
                 redisService.set(GoodsKey.getMiaoshaGoodsStock, "" + goods.getId(), goods.getStockCount());
+                //不存在时在设置 暂时不处理
+                //redisService.setnx(GoodsKey.getMiaoshaGoodsStock.getPrefix() + "" + goods.getId(), "" + goods.getStockCount());
                 //localOverMap.put(goods.getId(), false);
             }
+
         }
     }
 
