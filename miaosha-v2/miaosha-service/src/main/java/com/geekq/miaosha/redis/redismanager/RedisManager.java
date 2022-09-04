@@ -8,11 +8,8 @@ import redis.clients.jedis.JedisPool;
 @Slf4j
 public class RedisManager {
 
-    private static JedisPool jedisPool = null;
+    private static JedisPool jedisPool = SpringUtil.getBean(JedisPool.class);
 
-    static {
-        jedisPool = SpringUtil.getBean(JedisPool.class);
-    }
 
     public static Jedis getJedis() throws RuntimeException {
         if (null != jedisPool) {
