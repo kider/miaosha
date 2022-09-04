@@ -25,7 +25,7 @@ server:
     uri-encoding: UTF-8
     threads:
       #同时工作的线程数
-      max: 500
+      max: 400
       #最小备用线程
       min-spare: 100
     #ssl:
