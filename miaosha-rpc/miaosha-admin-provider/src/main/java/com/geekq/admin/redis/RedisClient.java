@@ -11,13 +11,8 @@ public class RedisClient {
     /**
      * 池化管理jedis链接池
      */
-    public static JedisPool jedisPool = null;
+    private static JedisPool jedisPool = SpringUtil.getBean(JedisPool.class);
 
-    static {
-        if (null != jedisPool) {
-            jedisPool = SpringUtil.getBean(JedisPool.class);
-        }
-    }
 
     /**
      * 向缓存中设置字符串内容
