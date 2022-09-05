@@ -28,15 +28,16 @@ server:
       max: 400
       #最小备用线程
       min-spare: 100
-    #ssl:
-    #key-store: classpath:coolboy.fun.tomcat.jks
-    #key-store-type: jks
-    #key-store-password: xxxx
     #允许等待连接（超过最大链接后）
     accept-count: 1000
     #允许最大连接
     max-connections: 8000
     connection-timeout: 3000
+  #ssl:
+  #key-store: classpath:coolboy.fun.tomcat.jks
+  #key-store-type: jks
+  #key-store-password: xxxx
+
 spring:
   rabbitmq:
     host: www.coolboy.fun
