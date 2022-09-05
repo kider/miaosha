@@ -15,7 +15,7 @@ spring:
   application:
     name: miaosha-order-provider
   datasource:
-    url: jdbc:mysql://www.coolboy.fun:xxxx/miaosha?useUnicode=true&serverTimezone=UTC&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
+    url: jdbc:mysql://www.coolboy.fun:xxxx/miaosha?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
     username: root
     password: xxxx
     driver-class-name: com.mysql.cj.jdbc.Driver
